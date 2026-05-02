@@ -37,7 +37,8 @@ static bool entity_sheep_tick_server(struct entity* e, struct server_local* s) {
 }
 
 static bool entity_sheep_tick_client(struct entity* e) {
-	return entity_default_client_tick(e);
+	mob_passive_tick_client(e, &ENTITY_DATA(e, entity_sheep_data)->wander);
+	return false;
 }
 
 static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
@@ -53,7 +54,7 @@ static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 										| in_block.sky_light);
 
 	gfx_lighting(false);
-	gfx_bind_texture(&texture_mob_char);
+	gfx_bind_texture(&texture_mob_sheep);
 
 	mat4 model;
 	glm_translate_make(model, pos_lerp);

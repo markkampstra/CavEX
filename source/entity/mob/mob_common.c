@@ -23,6 +23,26 @@
 #include "../../util.h"
 #include "mob_common.h"
 
+void mob_passive_tick_client(struct entity* e, struct mob_wander* w) {
+	assert(e && w);
+	// Per-tick observed movement = network_pos (latest server update) minus
+	// the previous tick's pos. This is the closest analogue to motionXZ on
+	// the server side, so we feed it into the same EntityLivingBase smoothing
+	// rule. Without this the client renders walk_amount=0 forever.
+	float dx = e->network_pos[0] - e->pos[0];
+	float dz = e->network_pos[2] - e->pos[2];
+	float speed = sqrtf(dx * dx + dz * dz);
+	float target = speed * 4.0F;
+	if(target > 1.0F)
+		target = 1.0F;
+	w->walk_amount += (target - w->walk_amount) * 0.4F;
+	w->walk_distance += w->walk_amount;
+
+	glm_vec3_copy(e->pos, e->pos_old);
+	glm_vec3_copy(e->network_pos, e->pos);
+	glm_vec2_copy(e->orient, e->orient_old);
+}
+
 float mob_leg_swing_deg(const struct mob_wander* w, float phase_offset) {
 	// Matches ModelQuadruped/ModelChicken.setRotationAngles in MC:
 	//   leg.rotateAngleX = cos(limbSwing * 0.6662 [+ pi]) * 1.4 *

@@ -70,6 +70,11 @@ extern struct tex_gfx texture_shadow;
 extern struct tex_gfx texture_water;
 
 extern struct tex_gfx texture_mob_char;
+extern struct tex_gfx texture_mob_pig;
+extern struct tex_gfx texture_mob_cow;
+extern struct tex_gfx texture_mob_chicken;
+extern struct tex_gfx texture_mob_sheep;
+extern struct tex_gfx texture_mob_sheep_fur;
 
 extern struct tex_gfx texture_armor_chain1;
 extern struct tex_gfx texture_armor_chain2;

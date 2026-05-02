@@ -14,3 +14,7 @@ extern/
 # Local copies of shaders next to assets (originals live in resources/)
 assets/fragment.shader
 assets/vertex.shader
+
+# Mob textures: extracted from a Mojang Beta 1.7.3 jar for local use.
+# Mojang owns these; users provide their own copy from a legal source.
+assets/mob/

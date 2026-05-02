@@ -45,6 +45,11 @@ struct tex_gfx texture_shadow;
 struct tex_gfx texture_water;
 
 struct tex_gfx texture_mob_char;
+struct tex_gfx texture_mob_pig;
+struct tex_gfx texture_mob_cow;
+struct tex_gfx texture_mob_chicken;
+struct tex_gfx texture_mob_sheep;
+struct tex_gfx texture_mob_sheep_fur;
 
 struct tex_gfx texture_armor_chain1;
 struct tex_gfx texture_armor_chain2;
@@ -128,6 +133,14 @@ void tex_init() {
 					  TEX_FMT_RGBA16, false);
 
 	tex_gfx_load_file(&texture_mob_char, "mob/char.png", TEX_FMT_RGBA16, false);
+	tex_gfx_load_file(&texture_mob_pig, "mob/pig.png", TEX_FMT_RGBA16, false);
+	tex_gfx_load_file(&texture_mob_cow, "mob/cow.png", TEX_FMT_RGBA16, false);
+	tex_gfx_load_file(&texture_mob_chicken, "mob/chicken.png",
+					  TEX_FMT_RGBA16, false);
+	tex_gfx_load_file(&texture_mob_sheep, "mob/sheep.png", TEX_FMT_RGBA16,
+					  false);
+	tex_gfx_load_file(&texture_mob_sheep_fur, "mob/sheep_fur.png",
+					  TEX_FMT_RGBA16, false);
 
 	size_t fog_size = 128;
 	uint8_t* fog = malloc(fog_size * fog_size * 4);

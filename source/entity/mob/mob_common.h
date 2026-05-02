@@ -40,4 +40,11 @@ void mob_passive_tick(struct entity* e, struct mob_wander* w,
 					  struct server_local* s, float walk_speed,
 					  float bbox_size);
 
+// Client-side counterpart. Replaces entity_default_client_tick for mob
+// types: copies network_pos into pos_old/pos as usual, but also advances
+// walk_amount and walk_distance from the observed per-tick movement so
+// the leg-swing animation runs on the client without the server needing
+// to sync wander state across the wire.
+void mob_passive_tick_client(struct entity* e, struct mob_wander* w);
+
 #endif

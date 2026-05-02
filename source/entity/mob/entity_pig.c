@@ -46,7 +46,8 @@ static bool entity_pig_tick_server(struct entity* e, struct server_local* s) {
 }
 
 static bool entity_pig_tick_client(struct entity* e) {
-	return entity_default_client_tick(e);
+	mob_passive_tick_client(e, &ENTITY_DATA(e, entity_pig_data)->wander);
+	return false;
 }
 
 static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
@@ -70,8 +71,7 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	// follows in the render path (world alpha pass, etc.).
 	gfx_lighting(false);
 
-	// Bind the player skin until we have a real pig texture in the atlas.
-	gfx_bind_texture(&texture_mob_char);
+	gfx_bind_texture(&texture_mob_pig);
 
 	mat4 model;
 	glm_translate_make(model, pos_lerp);
