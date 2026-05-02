@@ -57,14 +57,15 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 
 	mat4 model;
 	glm_translate_make(model, pos_lerp);
-	glm_rotate_y(model, e->orient[0], model);
+	glm_rotate_y(model, e->orient[0] + GLM_PIf, model);
 	glm_scale_uni(model, 1.0F / 16.0F);
 
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
-	float walk = ENTITY_DATA(e, entity_chicken_data)->wander.walk_distance;
-	float leg_swing = sinf(walk * 1.5F) * 30.0F;
+	const struct mob_wander* w = &ENTITY_DATA(e, entity_chicken_data)->wander;
+	float leg_a = mob_leg_swing_deg(w, 0.0F);
+	float leg_b = mob_leg_swing_deg(w, GLM_PIf);
 
 	// Body cube: small (6 wide x 8 long x 6 tall)
 	render_model_box(mv, (vec3) {-3.0F, 4.0F, -4.0F}, (vec3) {0.0F, 0.0F, 0.0F},
@@ -76,12 +77,12 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {4, 6, 3}, 0.0F, false, brightness);
 
-	// Two legs (alternating swing)
+	// Two legs alternating; matches ModelChicken.setRotationAngles.
 	render_model_box(mv, (vec3) {-2.0F, 4.0F, 0.0F}, (vec3) {1.0F, 4.0F, 1.0F},
-					 (vec3) {leg_swing, 0.0F, 0.0F}, (ivec2) {26, 13},
+					 (vec3) {leg_a, 0.0F, 0.0F}, (ivec2) {26, 13},
 					 (ivec3) {3, 4, 3}, 0.0F, false, brightness);
 	render_model_box(mv, (vec3) {1.0F, 4.0F, 0.0F}, (vec3) {1.0F, 4.0F, 1.0F},
-					 (vec3) {-leg_swing, 0.0F, 0.0F}, (ivec2) {26, 13},
+					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 13},
 					 (ivec3) {3, 4, 3}, 0.0F, false, brightness);
 
 	gfx_lighting(true);
@@ -131,6 +132,7 @@ void entity_chicken(uint32_t id, struct entity* e, bool server, void* world) {
 	cd->wander.dx = 0.0F;
 	cd->wander.dz = 0.0F;
 	cd->wander.walk_distance = 0.0F;
+	cd->wander.walk_amount = 0.0F;
 	e->max_health = CHICKEN_HEALTH;
 	e->health = CHICKEN_HEALTH;
 }

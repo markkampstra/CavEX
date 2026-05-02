@@ -192,14 +192,18 @@ struct entity_item {
 // Wander state shared by passive mobs. mob_common.h provides the helpers
 // that operate on this; per-mob data structs embed it directly.
 //
-// walk_distance is a free-running accumulator increased by horizontal speed
-// each tick; render code uses it as the phase argument to leg-swing
-// animations so legs only move while the mob is actually walking.
+// walk_distance and walk_amount mirror Minecraft's limbSwing /
+// limbSwingAmount (see EntityLivingBase.onUpdate, ModelQuadruped /
+// ModelChicken setRotationAngles). walk_amount is a smoothed, clamped
+// version of horizontal speed (used as the leg-swing amplitude --
+// goes to 0 when the mob is idle); walk_distance is a free-running
+// counter that grows by walk_amount each tick (used as the phase).
 struct mob_wander {
 	int ticks;
 	float dx;
 	float dz;
 	float walk_distance;
+	float walk_amount;
 };
 
 struct entity_pig_data {

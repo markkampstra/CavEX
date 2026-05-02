@@ -23,6 +23,15 @@
 #include "../../util.h"
 #include "mob_common.h"
 
+float mob_leg_swing_deg(const struct mob_wander* w, float phase_offset) {
+	// Matches ModelQuadruped/ModelChicken.setRotationAngles in MC:
+	//   leg.rotateAngleX = cos(limbSwing * 0.6662 [+ pi]) * 1.4 *
+	//                      limbSwingAmount  (in radians)
+	float rad = cosf(w->walk_distance * 0.6662F + phase_offset) * 1.4F
+		* w->walk_amount;
+	return rad * (180.0F / GLM_PIf);
+}
+
 void mob_passive_tick(struct entity* e, struct mob_wander* w,
 					  struct server_local* s, float walk_speed,
 					  float bbox_size) {
@@ -59,10 +68,17 @@ void mob_passive_tick(struct entity* e, struct mob_wander* w,
 	if(e->on_ground)
 		e->vel[1] = 0.0F;
 
-	// Accumulate walked horizontal distance for leg-swing animation. We add
-	// the horizontal velocity magnitude each tick, so the accumulator only
-	// increases while the mob is actively moving and stays put when idle.
-	w->walk_distance += sqrtf(e->vel[0] * e->vel[0] + e->vel[2] * e->vel[2]);
+	// Mirror EntityLivingBase.onUpdate from MC. limbSwingAmount targets
+	// clamp(horiz_speed * 4, 0..1), smoothed at rate 0.4 per tick; legs
+	// stop swinging when the mob stops moving. limbSwing is then a
+	// running counter that grows by amount each tick (so the phase only
+	// advances while the mob is actually walking).
+	float speed = sqrtf(e->vel[0] * e->vel[0] + e->vel[2] * e->vel[2]);
+	float target = speed * 4.0F;
+	if(target > 1.0F)
+		target = 1.0F;
+	w->walk_amount += (target - w->walk_amount) * 0.4F;
+	w->walk_distance += w->walk_amount;
 
 	entity_living_tick(e);
 }

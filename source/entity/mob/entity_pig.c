@@ -75,7 +75,10 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 
 	mat4 model;
 	glm_translate_make(model, pos_lerp);
-	glm_rotate_y(model, e->orient[0], model);
+	// Beta convention: model has head at -Z; the renderer applies a 180°
+	// offset so a yaw-zero entity (facing +Z) ends up with its head on
+	// the +Z side. Without this the pig walks backward.
+	glm_rotate_y(model, e->orient[0] + GLM_PIf, model);
 	glm_scale_uni(model, 1.0F / 16.0F);
 
 	mat4 mv;
@@ -91,21 +94,27 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 
-	// Four legs with walking animation. Front-left+back-right move opposite
-	// to front-right+back-left, the standard quadruped trot pattern. swing
-	// axis is X (rotation[0]) so legs pivot forward/back from the body.
-	float walk = ENTITY_DATA(e, entity_pig_data)->wander.walk_distance;
-	float a = sinf(walk * 1.5F) * 30.0F;
-	float swing[4] = {a, -a, -a, a};
-	struct {
+	// Four legs with walking animation. Standard quadruped trot
+	// (mcp940 ModelQuadruped.setRotationAngles): legs at the same diagonal
+	// share a phase, the other diagonal is offset by pi. Pivot at the top
+	// of each leg so the box swings from the hip.
+	const struct mob_wander* w = &ENTITY_DATA(e, entity_pig_data)->wander;
+	float swing_a = mob_leg_swing_deg(w, 0.0F);
+	float swing_b = mob_leg_swing_deg(w, GLM_PIf);
+	struct leg {
 		float x, z;
+		float phase; // a == diagonal pair 1, b == pair 2
 	} legs[4] = {
-		{-3.0F, -7.0F}, {1.0F, -7.0F}, {-3.0F, 4.0F}, {1.0F, 4.0F},
+		{-3.0F, -7.0F, 0.0F},  // front-left
+		{1.0F, -7.0F, 1.0F},   // front-right
+		{-3.0F, 4.0F, 1.0F},   // back-left
+		{1.0F, 4.0F, 0.0F},    // back-right
 	};
 	for(int k = 0; k < 4; k++) {
+		float swing = (legs[k].phase == 0.0F) ? swing_a : swing_b;
 		render_model_box(mv, (vec3) {legs[k].x, 6.0F, legs[k].z},
 						 (vec3) {2.0F, 6.0F, 2.0F},
-						 (vec3) {swing[k], 0.0F, 0.0F}, (ivec2) {0, 16},
+						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
 						 (ivec3) {4, 6, 4}, 0.0F, false, brightness);
 	}
 
@@ -160,6 +169,7 @@ void entity_pig(uint32_t id, struct entity* e, bool server, void* world) {
 	pd->wander.dx = 0.0F;
 	pd->wander.dz = 0.0F;
 	pd->wander.walk_distance = 0.0F;
+	pd->wander.walk_amount = 0.0F;
 
 	e->max_health = PIG_HEALTH;
 	e->health = PIG_HEALTH;

@@ -25,6 +25,12 @@
 // struct mob_wander lives in entity.h so per-mob data structs (in entity.h)
 // can embed it. mob_common.h just provides the helpers that operate on it.
 
+// Beta-equivalent leg-swing angle in degrees, given the mob's wander state.
+// phase_offset = 0 for "this leg moves with limbSwing", GLM_PIf for "this
+// leg moves opposite". Renders should pass swing_deg to render_model_box's
+// rotation[0] (X-axis) so legs pivot forward/back at the hip.
+float mob_leg_swing_deg(const struct mob_wander* w, float phase_offset);
+
 // Standard passive-mob server tick: picks a new wander direction every
 // 80-280 ticks, walks at walk_speed, applies gravity, runs entity_try_move
 // against an axis-aligned cube bbox of bbox_size on a side, applies
