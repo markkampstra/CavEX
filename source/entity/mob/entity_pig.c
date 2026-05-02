@@ -95,9 +95,16 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	float brightness = gfx_lookup_light((in_block.torch_light << 4)
 										| in_block.sky_light);
 
+	// gfx_lighting(false) is required: when lighting is enabled, the vertex
+	// shader replaces a_color with a lookup-table sample driven by the
+	// a_light attribute. gfx_draw_quads (which render_model_box uses) only
+	// binds a_pos/a_color/a_texcoord, so the stale a_light values from the
+	// world chunk render bleed in -- the model renders pitch-black or
+	// effectively invisible. Restore lighting after for everything that
+	// follows in the render path (world alpha pass, etc.).
+	gfx_lighting(false);
+
 	// Bind the player skin until we have a real pig texture in the atlas.
-	// All UV coords below sample whatever's there, so the pig looks pink-ish
-	// against the player's colour palette but is at least visible.
 	gfx_bind_texture(&texture_mob_char);
 
 	mat4 model;
@@ -130,6 +137,8 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 						 (ivec2) {0, 16}, (ivec3) {4, 6, 4}, 0.0F, false,
 						 brightness);
 	}
+
+	gfx_lighting(true);
 
 	struct AABB shadow_bbox;
 	aabb_setsize_centered(&shadow_bbox, 0.9F, 0.1F, 0.9F);
