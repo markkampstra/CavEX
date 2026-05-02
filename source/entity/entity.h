@@ -30,6 +30,7 @@ enum entity_type {
 	ENTITY_LOCAL_PLAYER = 0,
 	ENTITY_ITEM,
 	ENTITY_PIG,
+	ENTITY_COW,
 	ENTITY_TYPE_COUNT,
 };
 
@@ -132,6 +133,7 @@ void entity_item(uint32_t id, struct entity* e, bool server, void* world,
 				 struct item_data it);
 
 void entity_pig(uint32_t id, struct entity* e, bool server, void* world);
+void entity_cow(uint32_t id, struct entity* e, bool server, void* world);
 
 uint32_t entity_gen_id(dict_entity_t dict);
 void entities_client_tick(dict_entity_t dict);
@@ -182,12 +184,20 @@ struct entity_item {
 	int age;
 };
 
-// Per-instance pig state. Wander timer counts down each server tick; when it
-// hits zero a new random direction is chosen and the timer restarts.
+// Wander state shared by passive mobs. mob_common.h provides the helpers
+// that operate on this; per-mob data structs embed it directly.
+struct mob_wander {
+	int ticks;
+	float dx;
+	float dz;
+};
+
 struct entity_pig_data {
-	int wander_ticks;
-	float wander_dx;
-	float wander_dz;
+	struct mob_wander wander;
+};
+
+struct entity_cow_data {
+	struct mob_wander wander;
 };
 
 #endif

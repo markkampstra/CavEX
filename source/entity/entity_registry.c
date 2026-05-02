@@ -34,6 +34,7 @@ static bool populated[ENTITY_TYPE_COUNT];
 void entity_local_player_register(void);
 void entity_item_register(void);
 void entity_pig_register(void);
+void entity_cow_register(void);
 
 void entity_register_type(enum entity_type t, const struct entity_type_def* d) {
 	assert(t >= 0 && t < ENTITY_TYPE_COUNT);
@@ -60,6 +61,7 @@ void entity_registry_init(void) {
 	entity_local_player_register();
 	entity_item_register();
 	entity_pig_register();
+	entity_cow_register();
 }
 
 bool entity_call_tick_client(struct entity* e) {

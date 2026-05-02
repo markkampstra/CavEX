@@ -26,6 +26,7 @@
 #include "../../platform/texture.h"
 #include "../../util.h"
 #include "../entity.h"
+#include "mob_common.h"
 
 // Phase 3 first-pass pig. Wanders in a random direction for ~80-280 ticks,
 // then picks a new one. Uses entity_try_move so it respects block
@@ -35,47 +36,12 @@
 // have a mob texture atlas in assets/.
 
 #define PIG_WALK_SPEED 0.06F
-#define PIG_GRAVITY 0.08F
 #define PIG_HEALTH 10
 
 static bool entity_pig_tick_server(struct entity* e, struct server_local* s) {
 	assert(e && s);
-
-	glm_vec3_copy(e->pos, e->pos_old);
-	glm_vec2_copy(e->orient, e->orient_old);
-
-	struct entity_pig_data* pd = ENTITY_DATA(e, entity_pig_data);
-
-	if(pd->wander_ticks <= 0) {
-		float angle = rand_gen_flt(&s->rand_src) * 2.0F * GLM_PIf;
-		pd->wander_dx = sinf(angle);
-		pd->wander_dz = cosf(angle);
-		pd->wander_ticks = 80 + (int)(rand_gen_flt(&s->rand_src) * 200.0F);
-		// face the direction we're walking so the rendered yaw matches
-		e->orient[0] = angle;
-	} else {
-		pd->wander_ticks--;
-	}
-
-	e->vel[0] = pd->wander_dx * PIG_WALK_SPEED;
-	e->vel[2] = pd->wander_dz * PIG_WALK_SPEED;
-	e->vel[1] -= PIG_GRAVITY;
-
-	struct AABB bbox;
-	aabb_setsize_centered(&bbox, 0.9F, 0.9F, 0.9F);
-
-	bool collision_xz = false;
-	for(int k = 0; k < 3; k++)
-		entity_try_move(e, e->pos, e->vel, &bbox, (size_t[]) {1, 0, 2}[k],
-						&collision_xz, &e->on_ground);
-
-	e->vel[0] *= 0.91F;
-	e->vel[2] *= 0.91F;
-	e->vel[1] *= 0.98F;
-	if(e->on_ground)
-		e->vel[1] = 0.0F;
-
-	entity_living_tick(e);
+	mob_passive_tick(e, &ENTITY_DATA(e, entity_pig_data)->wander, s,
+					 PIG_WALK_SPEED, 0.9F);
 	return false;
 }
 
@@ -171,9 +137,9 @@ void entity_pig(uint32_t id, struct entity* e, bool server, void* world) {
 	entity_default_init(e, server, world);
 
 	struct entity_pig_data* pd = ENTITY_DATA(e, entity_pig_data);
-	pd->wander_ticks = 0;
-	pd->wander_dx = 0.0F;
-	pd->wander_dz = 0.0F;
+	pd->wander.ticks = 0;
+	pd->wander.dx = 0.0F;
+	pd->wander.dz = 0.0F;
 
 	e->max_health = PIG_HEALTH;
 	e->health = PIG_HEALTH;

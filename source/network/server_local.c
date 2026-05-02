@@ -288,8 +288,19 @@ static void server_local_process(struct server_rpc* call, void* user) {
 			uint8_t mob_type = call->payload.debug_spawn.mob_type;
 			uint32_t eid = entity_gen_id(s->entities);
 			struct entity* e = dict_entity_safe_get(s->entities, eid);
-			if(mob_type == ENTITY_PIG) {
-				entity_pig(eid, e, true, &s->world);
+			bool ok = true;
+			switch(mob_type) {
+				case ENTITY_PIG:
+					entity_pig(eid, e, true, &s->world);
+					break;
+				case ENTITY_COW:
+					entity_cow(eid, e, true, &s->world);
+					break;
+				default:
+					ok = false;
+					break;
+			}
+			if(ok) {
 				entity_call_teleport(e, spawn_pos);
 				clin_rpc_send(&(struct client_rpc) {
 					.type = CRPC_SPAWN_MOB,
