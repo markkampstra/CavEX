@@ -34,6 +34,17 @@ void entity_default_init(struct entity* e, bool server, void* world) {
 	glm_vec3_zero(e->vel);
 	glm_vec2_zero(e->orient);
 	glm_vec2_zero(e->orient_old);
+
+	// Health defaults to 0 here so non-living entities (dropped items, etc.)
+	// stay invulnerable until something — typically a mob's init function —
+	// raises max_health. entity_damage is a no-op while max_health == 0.
+	e->health = 0;
+	e->max_health = 0;
+	e->hurt_time = 0;
+	e->death_time = 0;
+	e->air = 300;
+	glm_vec3_zero(e->motion_pushback);
+	e->on_damage = NULL;
 }
 
 void entity_default_teleport(struct entity* e, vec3 pos) {

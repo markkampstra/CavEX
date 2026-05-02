@@ -31,6 +31,22 @@ enum entity_type {
 	ENTITY_ITEM,
 };
 
+// Damage causes; mirrors Beta 1.7.3's net.minecraft.util.DamageSource
+// constants. Used to gate behaviour (e.g. armour ignores DMG_DROWN/DMG_VOID,
+// fall damage skipped in water, etc.) once those rules land in Phase 3+.
+enum damage_source {
+	DMG_GENERIC,
+	DMG_FALL,
+	DMG_DROWN,
+	DMG_LAVA,
+	DMG_FIRE,
+	DMG_MOB,
+	DMG_PLAYER,
+	DMG_VOID,
+	DMG_CACTUS,
+	DMG_SUFFOCATE,
+};
+
 struct server_local;
 
 struct entity {
@@ -48,10 +64,23 @@ struct entity {
 
 	vec3 network_pos;
 
+	// Health / damage state. health <= 0 means dead. hurt_time / death_time
+	// are animation timers ticked down each frame; air is the drowning timer
+	// (Beta default 300, drowning damage starts when it hits 0).
+	int16_t health;
+	int16_t max_health;
+	int16_t hurt_time;
+	int16_t death_time;
+	int16_t air;
+	vec3 motion_pushback;
+
 	bool (*tick_client)(struct entity*);
 	bool (*tick_server)(struct entity*, struct server_local*);
 	void (*render)(struct entity*, mat4, float);
 	void (*teleport)(struct entity*, vec3);
+	// Optional per-type damage hook. NULL means "use the default rules in
+	// entity_damage". Non-NULL lets a mob override (e.g. creeper starts fuse).
+	void (*on_damage)(struct entity*, int amount, enum damage_source src);
 
 	enum entity_type type;
 	union entity_data {
