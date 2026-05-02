@@ -55,6 +55,55 @@ void entity_default_teleport(struct entity* e, vec3 pos) {
 	glm_vec3_copy(pos, e->network_pos);
 }
 
+void entity_living_tick(struct entity* e) {
+	assert(e);
+	if(e->hurt_time > 0)
+		e->hurt_time--;
+	// Once dead, run the death-animation timer. delay_destroy is already
+	// being decremented elsewhere in the engine, so we just bump death_time.
+	if(e->health <= 0 && e->max_health > 0)
+		e->death_time++;
+}
+
+void entity_damage(struct entity* e, int amount, enum damage_source src) {
+	assert(e);
+	if(e->max_health <= 0)
+		return;            // not a living entity
+	if(e->health <= 0)
+		return;            // already dead
+	if(amount <= 0)
+		return;
+	// Beta i-frames: a fresh hit is ignored if hurt_time hasn't ticked back
+	// down. DMG_VOID bypasses (it's the bottom-of-world insta-kill).
+	if(e->hurt_time > 0 && src != DMG_VOID)
+		return;
+
+	if(e->on_damage) {
+		e->on_damage(e, amount, src);
+		return;
+	}
+
+	e->health -= (int16_t)amount;
+	e->hurt_time = 10;     // Beta value
+
+	if(e->health <= 0) {
+		e->health = 0;
+		entity_kill(e);
+	}
+}
+
+void entity_kill(struct entity* e) {
+	assert(e);
+	e->health = 0;
+	if(e->death_time == 0)
+		e->death_time = 1;
+	// Beta despawns the corpse after a short delay (~20 ticks). The engine's
+	// existing delay_destroy machinery in entities_client_tick handles the
+	// actual removal once we set this.
+	if(e->delay_destroy < 0)
+		e->delay_destroy = 20;
+}
+
 bool entity_default_client_tick(struct entity* e) {
 	assert(e);
 

@@ -114,6 +114,18 @@ void entity_default_init(struct entity* e, bool server, void* world);
 void entity_default_teleport(struct entity* e, vec3 pos);
 bool entity_default_client_tick(struct entity* e);
 
+// Living-entity helpers. entity_living_tick decrements hurt_time/death_time
+// and should be called once per server tick from any tick_server function
+// of an entity that can take damage.
+void entity_living_tick(struct entity* e);
+// Apply damage to the entity. No-op for non-living entities (max_health == 0)
+// or already-dead entities (health <= 0). Honors hurt_time i-frames except
+// for DMG_VOID (insta-kill bypass).
+void entity_damage(struct entity* e, int amount, enum damage_source src);
+// Set health to 0 and start the death animation; the entity is destroyed
+// after the death-animation timer expires.
+void entity_kill(struct entity* e);
+
 void entity_shadow(struct entity* e, struct AABB* a, mat4 view);
 
 bool entity_get_block(struct entity* e, w_coord_t x, w_coord_t y, w_coord_t z,
