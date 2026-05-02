@@ -52,12 +52,14 @@ static void cmd_help(int argc, char** argv);
 static void cmd_quit(int argc, char** argv);
 static void cmd_time(int argc, char** argv);
 static void cmd_tp(int argc, char** argv);
+static void cmd_ambient(int argc, char** argv);
 
 static const struct cmd cmds[] = {
 	{"help", "help", cmd_help},
 	{"quit", "quit", cmd_quit},
 	{"time", "time <ticks|day|night>", cmd_time},
 	{"tp", "tp <x> <y> <z>", cmd_tp},
+	{"ambient", "ambient <0.0-1.0>  (night-side brightness floor)", cmd_ambient},
 };
 static const size_t cmd_count = sizeof(cmds) / sizeof(cmds[0]);
 
@@ -171,6 +173,22 @@ static void cmd_time(int argc, char** argv) {
 	gstate.world_time = t;
 	gstate.world_time_start = time_get();
 	printf("[console] time set to %ld\n", t);
+}
+
+static void cmd_ambient(int argc, char** argv) {
+	if(argc < 2) {
+		printf("[console] usage: ambient <0.0-1.0>  (current: %.2f)\n",
+			   gstate.config.ambient_floor);
+		return;
+	}
+	char* end;
+	float v = strtof(argv[1], &end);
+	if(*end != '\0' || v < 0.0F || v > 1.0F) {
+		printf("[console] invalid value: %s (need 0.0..1.0)\n", argv[1]);
+		return;
+	}
+	gstate.config.ambient_floor = v;
+	printf("[console] ambient floor set to %.2f\n", v);
 }
 
 static void cmd_tp(int argc, char** argv) {

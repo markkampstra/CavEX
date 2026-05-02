@@ -24,11 +24,12 @@
 #include "util.h"
 
 float daytime_brightness(float time) {
-	return (gstate.world.dimension == WORLD_DIM_OVERWORLD) ?
-		glm_clamp(cosf(daytime_celestial_angle(time) * 2.0F * GLM_PIf) * 2.0F
-					  + 0.5F,
-				  0.0F, 1.0F) :
-		0.0F;
+	if(gstate.world.dimension != WORLD_DIM_OVERWORLD)
+		return 0.0F;
+
+	float b = cosf(daytime_celestial_angle(time) * 2.0F * GLM_PIf) * 2.0F
+		+ 0.5F;
+	return glm_clamp(b, gstate.config.ambient_floor, 1.0F);
 }
 
 float daytime_celestial_angle(float time) {

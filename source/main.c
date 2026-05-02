@@ -55,6 +55,7 @@ int main(void) {
 	gstate.config.fov = 70.0F;
 	gstate.config.render_distance = 192.0F;
 	gstate.config.fog_distance = 5 * 16.0F;
+	gstate.config.ambient_floor = 0.25F;
 	gstate.world_loaded = false;
 	gstate.held_item_animation.punch.start = time_get();
 	gstate.held_item_animation.switch_item.start = time_get();
