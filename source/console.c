@@ -80,7 +80,7 @@ static void* console_reader_thread(void* user) {
 	}
 }
 
-void console_init(void) {
+void console_start(void) {
 	tchannel_init(&filled_chan, CONSOLE_QUEUE);
 	tchannel_init(&empty_chan, CONSOLE_QUEUE);
 	for(size_t k = 0; k < CONSOLE_QUEUE; k++)
