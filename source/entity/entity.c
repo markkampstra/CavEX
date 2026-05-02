@@ -43,6 +43,7 @@ void entity_default_init(struct entity* e, bool server, void* world) {
 	e->hurt_time = 0;
 	e->death_time = 0;
 	e->air = 300;
+	e->fall_distance = 0.0F;
 	glm_vec3_zero(e->motion_pushback);
 	e->on_damage = NULL;
 }

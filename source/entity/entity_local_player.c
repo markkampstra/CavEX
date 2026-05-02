@@ -212,6 +212,20 @@ static bool entity_tick(struct entity* e) {
 			e->vel[1] = 0.3F;
 	}
 
+	// Fall-damage tracking. Accumulate downward travel each tick; when
+	// the player lands (on_ground), turn that into damage with the Beta
+	// formula and reset. Water/lava cancel fall damage.
+	float dy = e->pos[1] - e->pos_old[1];
+	if(dy < 0.0F)
+		e->fall_distance += -dy;
+	if(e->on_ground) {
+		int fall_dmg = (int)ceilf(e->fall_distance - 3.0F);
+		if(fall_dmg > 0 && !in_water && !in_lava)
+			entity_damage(e, fall_dmg, DMG_FALL);
+		e->fall_distance = 0.0F;
+	}
+
+	entity_living_tick(e);
 	return false;
 }
 
@@ -238,4 +252,9 @@ void entity_local_player(uint32_t id, struct entity* e, struct world* w) {
 
 	entity_default_init(e, false, w);
 	e->data.local_player.jump_ticks = 0;
+
+	// Beta player has 20 HP (10 hearts) and 300 ticks of breath.
+	e->max_health = 20;
+	e->health = 20;
+	e->air = 300;
 }

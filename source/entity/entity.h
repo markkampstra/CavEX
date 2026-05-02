@@ -72,6 +72,9 @@ struct entity {
 	int16_t hurt_time;
 	int16_t death_time;
 	int16_t air;
+	// Distance fallen since the last on_ground=true tick. Beta fall damage
+	// is ceil(fall_distance - 3) HP applied on landing.
+	float fall_distance;
 	vec3 motion_pushback;
 
 	bool (*tick_client)(struct entity*);
