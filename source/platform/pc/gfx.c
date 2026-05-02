@@ -79,6 +79,8 @@ static GLuint create_shader(const char* vertex, const char* fragment) {
 
 static int window_width = 854;
 static int window_height = 480;
+static int fb_width = 854;
+static int fb_height = 480;
 GLFWwindow* window;
 
 int gfx_width() {
@@ -89,11 +91,15 @@ int gfx_height() {
 	return window_height;
 }
 
-static void framebuffer_size_callback(GLFWwindow* window, int width,
-									  int height) {
+static void window_size_callback(GLFWwindow* w, int width, int height) {
 	window_width = width;
 	window_height = height;
-	glViewport(0, 0, gfx_width(), gfx_height());
+}
+
+static void framebuffer_size_callback(GLFWwindow* w, int width, int height) {
+	fb_width = width;
+	fb_height = height;
+	glViewport(0, 0, fb_width, fb_height);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset,
@@ -119,6 +125,10 @@ void gfx_setup() {
 		= glfwCreateWindow(window_width, window_height, GAME_NAME, NULL, NULL);
 	glfwMakeContextCurrent(window);
 
+	glfwGetWindowSize(window, &window_width, &window_height);
+	glfwGetFramebufferSize(window, &fb_width, &fb_height);
+
+	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	// glfwSetScrollCallback(window, scroll_callback);
 
@@ -166,7 +176,7 @@ void gfx_setup() {
 
 	gfx_depth_func(MODE_LEQUAL);
 
-	glViewport(0, 0, gfx_width(), gfx_height());
+	glViewport(0, 0, fb_width, fb_height);
 
 	tex_init();
 	gfx_bind_texture(&texture_terrain);
@@ -391,8 +401,15 @@ void gfx_cull_func(enum cull_func func) {
 void gfx_scissor(bool enable, uint32_t x, uint32_t y, uint32_t width,
 				 uint32_t height) {
 	if(enable) {
+		float sx = (float)fb_width / (float)window_width;
+		float sy = (float)fb_height / (float)window_height;
+		int fbx = (int)((float)x * sx);
+		int fby
+			= (int)((float)(window_height - (int)y - (int)height) * sy);
+		int fbw = (int)((float)width * sx);
+		int fbh = (int)((float)height * sy);
 		glEnable(GL_SCISSOR_TEST);
-		glScissor(x, y, width, height);
+		glScissor(fbx, fby, fbw, fbh);
 	} else {
 		glDisable(GL_SCISSOR_TEST);
 	}
