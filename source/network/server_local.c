@@ -271,6 +271,32 @@ static void server_local_process(struct server_rpc* call, void* user) {
 				}
 			}
 			break;
+		case SRPC_PLAYER_DEATH: {
+			// Spawn each non-empty inventory slot as a thrown item entity at
+			// the player's position, then clear and sync the slot to the
+			// client. Picked-item (cursor) and armour are also wiped so the
+			// post-respawn inventory is empty.
+			if(!s->player.has_pos)
+				break;
+			vec3 drop_pos = {s->player.x, s->player.y, s->player.z};
+			for(size_t k = 0; k < INVENTORY_SIZE; k++) {
+				struct item_data it;
+				if(!inventory_get_slot(&s->player.inventory, k, &it))
+					continue;
+				if(it.id == 0)
+					continue;
+				server_local_spawn_item(drop_pos, &it, true, s);
+				inventory_clear_slot(&s->player.inventory, k);
+				clin_rpc_send(&(struct client_rpc) {
+					.type = CRPC_INVENTORY_SLOT,
+					.payload.inventory_slot.window = WINDOWC_INVENTORY,
+					.payload.inventory_slot.slot = k,
+					.payload.inventory_slot.item
+					= s->player.inventory.items[k],
+				});
+			}
+			break;
+		}
 		case SRPC_UNLOAD_WORLD:
 			// save chunks here, then destroy all
 			clin_rpc_send(&(struct client_rpc) {

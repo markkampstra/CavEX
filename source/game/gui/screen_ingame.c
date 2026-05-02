@@ -159,6 +159,21 @@ void screen_ingame_render3D(struct screen* s, mat4 view) {
 }
 
 static void screen_ingame_update(struct screen* s, float dt) {
+	// Once the death animation has played out, hand off to the dead screen.
+	// max_health > 0 gates this to actual living entities (player) and
+	// avoids tripping during the brief frame between world load and player
+	// creation. The SRPC_PLAYER_DEATH dispatch only fires once per death
+	// because screen_set switches us off this screen before the next tick.
+	if(gstate.local_player && gstate.local_player->max_health > 0
+	   && gstate.local_player->health <= 0
+	   && gstate.local_player->death_time > 20) {
+		svin_rpc_send(&(struct server_rpc) {
+			.type = SRPC_PLAYER_DEATH,
+		});
+		screen_set(&screen_dead);
+		return;
+	}
+
 	if(gstate.camera_hit.hit && input_pressed(IB_ACTION2)
 	   && !gstate.digging.active) {
 		svin_rpc_send(&(struct server_rpc) {
@@ -426,14 +441,33 @@ static void screen_ingame_render2D(struct screen* s, int width, int height) {
 							  gstate.windows[WINDOWC_INVENTORY])),
 				  height - 32 * 8 / 5 - 23 * 2, 208, 0, 24, 24, 24 * 2, 24 * 2);
 
-	for(int k = 0; k < 10; k++) {
-		// draw hearts
-		gutil_texquad((width - 182 * 2) / 2 + k * 8 * 2,
-					  height - 32 * 8 / 5 - (22 + 10) * 2, 16, 229, 9, 9, 9 * 2,
-					  9 * 2);
-		gutil_texquad((width - 182 * 2) / 2 + k * 8 * 2,
-					  height - 32 * 8 / 5 - (22 + 10) * 2, 52, 229, 9, 9, 9 * 2,
-					  9 * 2);
+	// Hearts. Each heart represents 2 HP. We draw one row of empty hearts
+	// up to the player's max_health/2, then overlay full or half hearts
+	// based on current health. Atlas UVs (texture_gui2):
+	//   empty heart  16,229  (9x9)
+	//   full heart   52,229
+	//   half heart   61,229
+	int hp = 0;
+	int max_hp = 20;
+	if(gstate.local_player && gstate.local_player->max_health > 0) {
+		hp = gstate.local_player->health;
+		max_hp = gstate.local_player->max_health;
+	}
+	int total_hearts = (max_hp + 1) / 2;
+	if(total_hearts > 10)
+		total_hearts = 10;
+
+	int hx0 = (width - 182 * 2) / 2;
+	int hy = height - 32 * 8 / 5 - (22 + 10) * 2;
+
+	for(int k = 0; k < total_hearts; k++) {
+		int x = hx0 + k * 8 * 2;
+		gutil_texquad(x, hy, 16, 229, 9, 9, 9 * 2, 9 * 2);
+		int hp_left = hp - k * 2;
+		if(hp_left >= 2)
+			gutil_texquad(x, hy, 52, 229, 9, 9, 9 * 2, 9 * 2);
+		else if(hp_left == 1)
+			gutil_texquad(x, hy, 61, 229, 9, 9, 9 * 2, 9 * 2);
 	}
 }
 

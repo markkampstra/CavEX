@@ -22,12 +22,12 @@
 
 #ifdef PLATFORM_PC
 
-void console_init(void);
+void console_start(void);
 void console_poll(void);
 
 #else
 
-static inline void console_init(void) { }
+static inline void console_start(void) { }
 static inline void console_poll(void) { }
 
 #endif

@@ -31,6 +31,22 @@ enum entity_type {
 	ENTITY_ITEM,
 };
 
+// Damage causes; mirrors Beta 1.7.3's net.minecraft.util.DamageSource
+// constants. Used to gate behaviour (e.g. armour ignores DMG_DROWN/DMG_VOID,
+// fall damage skipped in water, etc.) once those rules land in Phase 3+.
+enum damage_source {
+	DMG_GENERIC,
+	DMG_FALL,
+	DMG_DROWN,
+	DMG_LAVA,
+	DMG_FIRE,
+	DMG_MOB,
+	DMG_PLAYER,
+	DMG_VOID,
+	DMG_CACTUS,
+	DMG_SUFFOCATE,
+};
+
 struct server_local;
 
 struct entity {
@@ -48,10 +64,26 @@ struct entity {
 
 	vec3 network_pos;
 
+	// Health / damage state. health <= 0 means dead. hurt_time / death_time
+	// are animation timers ticked down each frame; air is the drowning timer
+	// (Beta default 300, drowning damage starts when it hits 0).
+	int16_t health;
+	int16_t max_health;
+	int16_t hurt_time;
+	int16_t death_time;
+	int16_t air;
+	// Distance fallen since the last on_ground=true tick. Beta fall damage
+	// is ceil(fall_distance - 3) HP applied on landing.
+	float fall_distance;
+	vec3 motion_pushback;
+
 	bool (*tick_client)(struct entity*);
 	bool (*tick_server)(struct entity*, struct server_local*);
 	void (*render)(struct entity*, mat4, float);
 	void (*teleport)(struct entity*, vec3);
+	// Optional per-type damage hook. NULL means "use the default rules in
+	// entity_damage". Non-NULL lets a mob override (e.g. creeper starts fuse).
+	void (*on_damage)(struct entity*, int amount, enum damage_source src);
 
 	enum entity_type type;
 	union entity_data {
@@ -84,6 +116,18 @@ void entities_client_render(dict_entity_t dict, struct camera* c,
 void entity_default_init(struct entity* e, bool server, void* world);
 void entity_default_teleport(struct entity* e, vec3 pos);
 bool entity_default_client_tick(struct entity* e);
+
+// Living-entity helpers. entity_living_tick decrements hurt_time/death_time
+// and should be called once per server tick from any tick_server function
+// of an entity that can take damage.
+void entity_living_tick(struct entity* e);
+// Apply damage to the entity. No-op for non-living entities (max_health == 0)
+// or already-dead entities (health <= 0). Honors hurt_time i-frames except
+// for DMG_VOID (insta-kill bypass).
+void entity_damage(struct entity* e, int amount, enum damage_source src);
+// Set health to 0 and start the death animation; the entity is destroyed
+// after the death-animation timer expires.
+void entity_kill(struct entity* e);
 
 void entity_shadow(struct entity* e, struct AABB* a, mat4 view);
 

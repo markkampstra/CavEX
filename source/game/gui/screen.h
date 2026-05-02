@@ -38,6 +38,7 @@ extern struct screen screen_select_world;
 extern struct screen screen_inventory;
 extern struct screen screen_crafting;
 extern struct screen screen_furnace;
+extern struct screen screen_dead;
 
 void screen_set(struct screen* s);
 

@@ -99,7 +99,7 @@ int main(void) {
 	struct server_local server;
 	server_local_create(&server);
 
-	console_init();
+	console_start();
 
 	ptime_t last_frame = time_get();
 	ptime_t last_tick = last_frame;
