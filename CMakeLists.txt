@@ -146,6 +146,8 @@ add_executable(cavex
 
 target_compile_definitions(cavex PRIVATE PLATFORM_PC CGLM_ALL_UNALIGNED)
 
+target_include_directories(cavex PRIVATE ${CMAKE_SOURCE_DIR}/extern)
+
 set_target_properties(
 	cavex PROPERTIES
 	C_STANDARD 99
