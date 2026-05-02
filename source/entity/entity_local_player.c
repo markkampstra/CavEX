@@ -55,6 +55,27 @@ static bool test_in_liquid(struct AABB* entity, struct block_info* blk_info) {
 	return test_in_water(entity, blk_info) || test_in_lava(entity, blk_info);
 }
 
+static bool test_in_fire(struct AABB* entity, struct block_info* blk_info) {
+	if(blk_info->block->type != BLOCK_FIRE)
+		return false;
+	struct AABB box;
+	aabb_setsize(&box, 1.0F, 1.0F, 1.0F);
+	aabb_translate(&box, blk_info->x, blk_info->y, blk_info->z);
+	return aabb_intersection(entity, &box);
+}
+
+static bool test_in_cactus(struct AABB* entity, struct block_info* blk_info) {
+	if(blk_info->block->type != BLOCK_CACTUS)
+		return false;
+	// Beta cactus is shrunk 1/16 per side; an entity must overlap the
+	// shrunken interior, not just the cube, to take damage.
+	struct AABB box;
+	aabb_setsize(&box, 14.0F / 16.0F, 1.0F, 14.0F / 16.0F);
+	aabb_translate(&box, blk_info->x + 1.0F / 16.0F, blk_info->y,
+				   blk_info->z + 1.0F / 16.0F);
+	return aabb_intersection(entity, &box);
+}
+
 static bool entity_tick(struct entity* e) {
 	assert(e);
 
@@ -224,6 +245,37 @@ static bool entity_tick(struct entity* e) {
 			entity_damage(e, fall_dmg, DMG_FALL);
 		e->fall_distance = 0.0F;
 	}
+
+	// Drowning: when the head AABB is in water, run the air timer down. At
+	// air <= 0 take 2 HP every 20 ticks, matching Beta. Refill instantly
+	// once the head clears.
+	struct AABB head_bbox;
+	aabb_setsize_centered(&head_bbox, 0.6F, 0.6F, 0.6F);
+	aabb_translate(&head_bbox, e->pos[0], e->pos[1], e->pos[2]);
+	bool head_in_water = entity_intersection(e, &head_bbox, test_in_water);
+	if(head_in_water) {
+		if(e->air > 0) {
+			e->air--;
+		} else {
+			e->air--;
+			if(e->air <= -20) {
+				entity_damage(e, 2, DMG_DROWN);
+				e->air = 0;
+			}
+		}
+	} else if(e->air < 300) {
+		e->air = 300;
+	}
+
+	// Lava / fire / cactus contact damage. The hurt_time i-frame in
+	// entity_damage gates the rate so attempting damage every tick still
+	// produces sensible numbers (~ 8 HP/sec lava, 2 HP/sec fire/cactus).
+	if(in_lava)
+		entity_damage(e, 4, DMG_LAVA);
+	if(entity_intersection(e, &bbox, test_in_fire))
+		entity_damage(e, 1, DMG_FIRE);
+	if(entity_intersection(e, &bbox, test_in_cactus))
+		entity_damage(e, 1, DMG_CACTUS);
 
 	entity_living_tick(e);
 	return false;
