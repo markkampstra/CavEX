@@ -63,7 +63,7 @@ static const struct cmd cmds[] = {
 	{"time", "time <ticks|day|night>", cmd_time},
 	{"tp", "tp <x> <y> <z>", cmd_tp},
 	{"ambient", "ambient <0.0-1.0>  (night-side brightness floor)", cmd_ambient},
-	{"spawn", "spawn <pig|cow>       (3 blocks in front of player)", cmd_spawn},
+	{"spawn", "spawn <pig|cow|chicken|sheep>", cmd_spawn},
 	{"kill", "kill                  (kill every mob, triggers drops)", cmd_kill},
 };
 static const size_t cmd_count = sizeof(cmds) / sizeof(cmds[0]);
@@ -215,8 +215,14 @@ static void cmd_spawn(int argc, char** argv) {
 		mob_type = ENTITY_PIG;
 	} else if(strcmp(argv[1], "cow") == 0) {
 		mob_type = ENTITY_COW;
+	} else if(strcmp(argv[1], "chicken") == 0) {
+		mob_type = ENTITY_CHICKEN;
+	} else if(strcmp(argv[1], "sheep") == 0) {
+		mob_type = ENTITY_SHEEP;
 	} else {
-		printf("[console] unknown mob type: %s (try `pig` or `cow`)\n", argv[1]);
+		printf("[console] unknown mob type: %s "
+			   "(try `pig`, `cow`, `chicken`, `sheep`)\n",
+			   argv[1]);
 		return;
 	}
 	svin_rpc_send(&(struct server_rpc) {

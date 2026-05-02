@@ -59,5 +59,10 @@ void mob_passive_tick(struct entity* e, struct mob_wander* w,
 	if(e->on_ground)
 		e->vel[1] = 0.0F;
 
+	// Accumulate walked horizontal distance for leg-swing animation. We add
+	// the horizontal velocity magnitude each tick, so the accumulator only
+	// increases while the mob is actively moving and stays put when idle.
+	w->walk_distance += sqrtf(e->vel[0] * e->vel[0] + e->vel[2] * e->vel[2]);
+
 	entity_living_tick(e);
 }

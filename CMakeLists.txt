@@ -82,6 +82,8 @@ add_executable(cavex
 				source/entity/mob/mob_common.c
 				source/entity/mob/entity_pig.c
 				source/entity/mob/entity_cow.c
+				source/entity/mob/entity_chicken.c
+				source/entity/mob/entity_sheep.c
 
 				source/cNBT/buffer.c
 				source/cNBT/nbt_loading.c

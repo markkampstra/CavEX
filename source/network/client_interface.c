@@ -237,6 +237,15 @@ void clin_process(struct client_rpc* call) {
 					entity_cow(call->payload.spawn_mob.entity_id, e, false,
 							   &gstate.world);
 					break;
+				case ENTITY_CHICKEN:
+					entity_chicken(call->payload.spawn_mob.entity_id, e, false,
+								   &gstate.world);
+					break;
+				case ENTITY_SHEEP:
+					entity_sheep(call->payload.spawn_mob.entity_id, e, false,
+								 &gstate.world,
+								 call->payload.spawn_mob.metadata);
+					break;
 				default:
 					// Unknown mob type -- still place an entity so the slot
 					// isn't dangling in the dict. Behaviour is whatever the

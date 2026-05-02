@@ -91,17 +91,22 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 
-	// Four legs at the body's corners
+	// Four legs with walking animation. Front-left+back-right move opposite
+	// to front-right+back-left, the standard quadruped trot pattern. swing
+	// axis is X (rotation[0]) so legs pivot forward/back from the body.
+	float walk = ENTITY_DATA(e, entity_pig_data)->wander.walk_distance;
+	float a = sinf(walk * 1.5F) * 30.0F;
+	float swing[4] = {a, -a, -a, a};
 	struct {
 		float x, z;
 	} legs[4] = {
 		{-3.0F, -7.0F}, {1.0F, -7.0F}, {-3.0F, 4.0F}, {1.0F, 4.0F},
 	};
 	for(int k = 0; k < 4; k++) {
-		render_model_box(mv, (vec3) {legs[k].x, 0.0F, legs[k].z},
-						 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-						 (ivec2) {0, 16}, (ivec3) {4, 6, 4}, 0.0F, false,
-						 brightness);
+		render_model_box(mv, (vec3) {legs[k].x, 6.0F, legs[k].z},
+						 (vec3) {2.0F, 6.0F, 2.0F},
+						 (vec3) {swing[k], 0.0F, 0.0F}, (ivec2) {0, 16},
+						 (ivec3) {4, 6, 4}, 0.0F, false, brightness);
 	}
 
 	gfx_lighting(true);
@@ -154,6 +159,7 @@ void entity_pig(uint32_t id, struct entity* e, bool server, void* world) {
 	pd->wander.ticks = 0;
 	pd->wander.dx = 0.0F;
 	pd->wander.dz = 0.0F;
+	pd->wander.walk_distance = 0.0F;
 
 	e->max_health = PIG_HEALTH;
 	e->health = PIG_HEALTH;

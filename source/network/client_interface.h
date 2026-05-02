@@ -104,6 +104,7 @@ struct client_rpc {
 		struct {
 			uint32_t entity_id;
 			uint8_t mob_type;     // enum entity_type
+			uint8_t metadata;     // type-specific (e.g. sheep wool color)
 			vec3 pos;
 		} spawn_mob;
 	} payload;

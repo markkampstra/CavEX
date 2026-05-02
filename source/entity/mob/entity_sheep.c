@@ -27,20 +27,20 @@
 #include "../entity.h"
 #include "mob_common.h"
 
-#define COW_WALK_SPEED 0.05F
-#define COW_HEALTH 10
+#define SHEEP_WALK_SPEED 0.05F
+#define SHEEP_HEALTH 8
 
-static bool entity_cow_tick_server(struct entity* e, struct server_local* s) {
-	mob_passive_tick(e, &ENTITY_DATA(e, entity_cow_data)->wander, s,
-					 COW_WALK_SPEED, 0.9F);
+static bool entity_sheep_tick_server(struct entity* e, struct server_local* s) {
+	mob_passive_tick(e, &ENTITY_DATA(e, entity_sheep_data)->wander, s,
+					 SHEEP_WALK_SPEED, 0.9F);
 	return false;
 }
 
-static bool entity_cow_tick_client(struct entity* e) {
+static bool entity_sheep_tick_client(struct entity* e) {
 	return entity_default_client_tick(e);
 }
 
-static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
+static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 	assert(e);
 
 	vec3 pos_lerp;
@@ -63,30 +63,31 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
-	// Cow body: slightly larger than pig (12x18x10 in 1/16 units)
-	render_model_box(mv, (vec3) {-6.0F, 5.0F, -9.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {18, 4},
-					 (ivec3) {12, 18, 10}, 0.0F, false, brightness);
-
-	// Head cube — taller and slightly bigger than pig's
-	render_model_box(mv, (vec3) {-4.0F, 9.0F, -17.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {8, 8, 6}, 0.0F, false, brightness);
-
-	// Four legs with walking animation (same trot pattern as pig).
-	float walk = ENTITY_DATA(e, entity_cow_data)->wander.walk_distance;
-	float a = sinf(walk * 1.5F) * 25.0F;
+	float walk = ENTITY_DATA(e, entity_sheep_data)->wander.walk_distance;
+	float a = sinf(walk * 1.5F) * 30.0F;
 	float swing[4] = {a, -a, -a, a};
+
+	// Body cube (8 wide x 16 long x 6 tall)
+	render_model_box(mv, (vec3) {-4.0F, 8.0F, -8.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {28, 8},
+					 (ivec3) {8, 16, 6}, 0.0F, false, brightness);
+
+	// Head
+	render_model_box(mv, (vec3) {-3.0F, 6.0F, -14.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {0, 0}, (ivec3) {6, 6, 8}, 0.0F, false, brightness);
+
+	// Four legs
 	struct {
 		float x, z;
 	} legs[4] = {
-		{-4.0F, -7.0F}, {0.0F, -7.0F}, {-4.0F, 5.0F}, {0.0F, 5.0F},
+		{-3.0F, -7.0F}, {1.0F, -7.0F}, {-3.0F, 5.0F}, {1.0F, 5.0F},
 	};
 	for(int k = 0; k < 4; k++) {
 		render_model_box(mv, (vec3) {legs[k].x, 12.0F, legs[k].z},
-						 (vec3) {2.0F, 12.0F, 2.0F},
+						 (vec3) {1.0F, 12.0F, 1.0F},
 						 (vec3) {swing[k], 0.0F, 0.0F}, (ivec2) {0, 16},
-						 (ivec3) {4, 12, 4}, 0.0F, false, brightness);
+						 (ivec3) {3, 12, 3}, 0.0F, false, brightness);
 	}
 
 	gfx_lighting(true);
@@ -97,50 +98,48 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	entity_shadow(e, &shadow_bbox, view);
 }
 
-static void entity_cow_on_death(struct entity* e, struct server_local* s) {
-	// Beta cows drop 0-2 leather on death (raw beef wasn't in beta 1.7.3).
-	int count = (int)(rand_gen_flt(&s->rand_src) * 3.0F);
-	for(int k = 0; k < count; k++) {
+static void entity_sheep_on_death(struct entity* e, struct server_local* s) {
+	struct entity_sheep_data* sd = ENTITY_DATA(e, entity_sheep_data);
+	if(!sd->sheared) {
 		struct item_data drop = {
-			.id = ITEM_LEATHER,
+			.id = BLOCK_WOOL,
 			.count = 1,
-			.durability = 0,
+			.durability = sd->wool_color, // dye color metadata
 		};
 		vec3 dpos = {e->pos[0], e->pos[1] + 0.5F, e->pos[2]};
 		server_local_spawn_item(dpos, &drop, false, s);
 	}
 }
 
-static const struct entity_type_def entity_cow_def = {
-	.name = "cow",
-	.data_size = sizeof(struct entity_cow_data),
-	.default_max_health = COW_HEALTH,
-	.tick_server = entity_cow_tick_server,
-	.tick_client = entity_cow_tick_client,
-	.render = entity_cow_render,
+static const struct entity_type_def entity_sheep_def = {
+	.name = "sheep",
+	.data_size = sizeof(struct entity_sheep_data),
+	.default_max_health = SHEEP_HEALTH,
+	.tick_server = entity_sheep_tick_server,
+	.tick_client = entity_sheep_tick_client,
+	.render = entity_sheep_render,
 	.teleport = entity_default_teleport,
 	.on_damage = NULL,
-	.on_death = entity_cow_on_death,
+	.on_death = entity_sheep_on_death,
 };
 
-void entity_cow_register(void) {
-	entity_register_type(ENTITY_COW, &entity_cow_def);
+void entity_sheep_register(void) {
+	entity_register_type(ENTITY_SHEEP, &entity_sheep_def);
 }
 
-void entity_cow(uint32_t id, struct entity* e, bool server, void* world) {
+void entity_sheep(uint32_t id, struct entity* e, bool server, void* world,
+				  uint8_t wool_color) {
 	assert(e && world);
-
 	e->id = id;
-	e->type = ENTITY_COW;
-
+	e->type = ENTITY_SHEEP;
 	entity_default_init(e, server, world);
-
-	struct entity_cow_data* cd = ENTITY_DATA(e, entity_cow_data);
-	cd->wander.ticks = 0;
-	cd->wander.dx = 0.0F;
-	cd->wander.dz = 0.0F;
-	cd->wander.walk_distance = 0.0F;
-
-	e->max_health = COW_HEALTH;
-	e->health = COW_HEALTH;
+	struct entity_sheep_data* sd = ENTITY_DATA(e, entity_sheep_data);
+	sd->wander.ticks = 0;
+	sd->wander.dx = 0.0F;
+	sd->wander.dz = 0.0F;
+	sd->wander.walk_distance = 0.0F;
+	sd->wool_color = wool_color & 0x0F;
+	sd->sheared = false;
+	e->max_health = SHEEP_HEALTH;
+	e->health = SHEEP_HEALTH;
 }

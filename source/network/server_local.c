@@ -55,11 +55,12 @@ static void server_local_try_natural_spawn(struct server_local* s) {
 	dict_entity_it(cit, s->entities);
 	while(!dict_entity_end_p(cit)) {
 		struct entity* ce = &dict_entity_ref(cit)->value;
-		if(ce->type == ENTITY_PIG || ce->type == ENTITY_COW)
+		if(ce->type == ENTITY_PIG || ce->type == ENTITY_COW
+		   || ce->type == ENTITY_CHICKEN || ce->type == ENTITY_SHEEP)
 			count++;
 		dict_entity_next(cit);
 	}
-	if(count >= 8)
+	if(count >= 10)
 		return;
 
 	int dx = (int)((rand_gen_flt(&s->rand_src) - 0.5F) * 32.0F);
@@ -89,14 +90,27 @@ static void server_local_try_natural_spawn(struct server_local* s) {
 	if(!found)
 		return;
 
-	bool is_cow = rand_gen_flt(&s->rand_src) < 0.5F;
-	uint8_t mob_type = is_cow ? ENTITY_COW : ENTITY_PIG;
+	uint8_t mob_type;
+	uint8_t metadata = 0;
 	uint32_t eid = entity_gen_id(s->entities);
 	struct entity* e = dict_entity_safe_get(s->entities, eid);
-	if(is_cow)
-		entity_cow(eid, e, true, &s->world);
-	else
+	float pick = rand_gen_flt(&s->rand_src);
+	if(pick < 0.30F) {
+		mob_type = ENTITY_PIG;
 		entity_pig(eid, e, true, &s->world);
+	} else if(pick < 0.55F) {
+		mob_type = ENTITY_COW;
+		entity_cow(eid, e, true, &s->world);
+	} else if(pick < 0.80F) {
+		mob_type = ENTITY_CHICKEN;
+		entity_chicken(eid, e, true, &s->world);
+	} else {
+		mob_type = ENTITY_SHEEP;
+		uint8_t color
+			= (uint8_t)(rand_gen_flt(&s->rand_src) * 16.0F) & 0x0F;
+		entity_sheep(eid, e, true, &s->world, color);
+		metadata = color;
+	}
 
 	vec3 pos = {x + 0.5F, y + 1.0F, z + 0.5F};
 	entity_call_teleport(e, pos);
@@ -105,6 +119,7 @@ static void server_local_try_natural_spawn(struct server_local* s) {
 		.type = CRPC_SPAWN_MOB,
 		.payload.spawn_mob.entity_id = eid,
 		.payload.spawn_mob.mob_type = mob_type,
+		.payload.spawn_mob.metadata = metadata,
 		.payload.spawn_mob.pos = {pos[0], pos[1], pos[2]},
 	});
 }
@@ -365,6 +380,7 @@ static void server_local_process(struct server_rpc* call, void* user) {
 			uint32_t eid = entity_gen_id(s->entities);
 			struct entity* e = dict_entity_safe_get(s->entities, eid);
 			bool ok = true;
+			uint8_t metadata = 0;
 			switch(mob_type) {
 				case ENTITY_PIG:
 					entity_pig(eid, e, true, &s->world);
@@ -372,6 +388,16 @@ static void server_local_process(struct server_rpc* call, void* user) {
 				case ENTITY_COW:
 					entity_cow(eid, e, true, &s->world);
 					break;
+				case ENTITY_CHICKEN:
+					entity_chicken(eid, e, true, &s->world);
+					break;
+				case ENTITY_SHEEP: {
+					uint8_t color
+						= (uint8_t)(rand_gen_flt(&s->rand_src) * 16.0F) & 0x0F;
+					entity_sheep(eid, e, true, &s->world, color);
+					metadata = color;
+					break;
+				}
 				default:
 					ok = false;
 					break;
@@ -382,6 +408,7 @@ static void server_local_process(struct server_rpc* call, void* user) {
 					.type = CRPC_SPAWN_MOB,
 					.payload.spawn_mob.entity_id = eid,
 					.payload.spawn_mob.mob_type = mob_type,
+					.payload.spawn_mob.metadata = metadata,
 					.payload.spawn_mob.pos = {spawn_pos[0], spawn_pos[1],
 											  spawn_pos[2]},
 				});

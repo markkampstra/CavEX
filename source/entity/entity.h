@@ -31,6 +31,8 @@ enum entity_type {
 	ENTITY_ITEM,
 	ENTITY_PIG,
 	ENTITY_COW,
+	ENTITY_CHICKEN,
+	ENTITY_SHEEP,
 	ENTITY_TYPE_COUNT,
 };
 
@@ -134,6 +136,9 @@ void entity_item(uint32_t id, struct entity* e, bool server, void* world,
 
 void entity_pig(uint32_t id, struct entity* e, bool server, void* world);
 void entity_cow(uint32_t id, struct entity* e, bool server, void* world);
+void entity_chicken(uint32_t id, struct entity* e, bool server, void* world);
+void entity_sheep(uint32_t id, struct entity* e, bool server, void* world,
+				  uint8_t wool_color);
 
 uint32_t entity_gen_id(dict_entity_t dict);
 void entities_client_tick(dict_entity_t dict);
@@ -186,10 +191,15 @@ struct entity_item {
 
 // Wander state shared by passive mobs. mob_common.h provides the helpers
 // that operate on this; per-mob data structs embed it directly.
+//
+// walk_distance is a free-running accumulator increased by horizontal speed
+// each tick; render code uses it as the phase argument to leg-swing
+// animations so legs only move while the mob is actually walking.
 struct mob_wander {
 	int ticks;
 	float dx;
 	float dz;
+	float walk_distance;
 };
 
 struct entity_pig_data {
@@ -198,6 +208,16 @@ struct entity_pig_data {
 
 struct entity_cow_data {
 	struct mob_wander wander;
+};
+
+struct entity_chicken_data {
+	struct mob_wander wander;
+};
+
+struct entity_sheep_data {
+	struct mob_wander wander;
+	uint8_t wool_color;   // 0..15, dye-color metadata for wool drop
+	bool sheared;
 };
 
 #endif
