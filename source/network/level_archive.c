@@ -358,8 +358,26 @@ bool level_archive_read_player(struct level_archive* la, vec3 position,
 	assert(la && la->data);
 
 	nbt_node* pos;
-	if(!level_archive_read(la, LEVEL_PLAYER_POSITION, &pos, 0))
-		return false;
+	if(!level_archive_read(la, LEVEL_PLAYER_POSITION, &pos, 0)) {
+		// Server-generated worlds (vanilla Beta server jar) have no Player
+		// compound — fall back to the world's spawn point.
+		int32_t sx = 0, sy = 64, sz = 0;
+		level_archive_read(la, LEVEL_SPAWN_X, &sx, 0);
+		level_archive_read(la, LEVEL_SPAWN_Y, &sy, 0);
+		level_archive_read(la, LEVEL_SPAWN_Z, &sz, 0);
+		if(position) {
+			position[0] = (float)sx + 0.5F;
+			position[1] = (float)sy + 1.5F;
+			position[2] = (float)sz + 0.5F;
+		}
+		if(velocity)
+			velocity[0] = velocity[1] = velocity[2] = 0.0F;
+		if(rotation)
+			rotation[0] = rotation[1] = 0.0F;
+		if(dimension)
+			*dimension = WORLD_DIM_OVERWORLD;
+		return true;
+	}
 
 	nbt_node* vel;
 	if(!level_archive_read(la, LEVEL_PLAYER_VELOCITY, &vel, 0))

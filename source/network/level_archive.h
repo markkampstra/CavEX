@@ -57,6 +57,18 @@ struct level_archive_tag {
 	(struct level_archive_tag) {                                               \
 		".Data.RandomSeed", TAG_LONG                                           \
 	}
+#define LEVEL_SPAWN_X                                                          \
+	(struct level_archive_tag) {                                               \
+		".Data.SpawnX", TAG_INT                                                \
+	}
+#define LEVEL_SPAWN_Y                                                          \
+	(struct level_archive_tag) {                                               \
+		".Data.SpawnY", TAG_INT                                                \
+	}
+#define LEVEL_SPAWN_Z                                                          \
+	(struct level_archive_tag) {                                               \
+		".Data.SpawnZ", TAG_INT                                                \
+	}
 #define LEVEL_PLAYER_HEALTH                                                    \
 	(struct level_archive_tag) {                                               \
 		".Data.Player.Health", TAG_SHORT                                       \
