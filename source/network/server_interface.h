@@ -34,6 +34,7 @@ enum server_rpc_type {
 	SRPC_WINDOW_CLICK,
 	SRPC_WINDOW_CLOSE,
 	SRPC_PLAYER_DEATH,
+	SRPC_DEBUG_SPAWN,        // dev console: spawn a mob near the player
 };
 
 struct server_rpc {
@@ -67,6 +68,9 @@ struct server_rpc {
 		struct {
 			uint8_t window;
 		} window_close;
+		struct {
+			uint8_t mob_type;       // enum entity_type
+		} debug_spawn;
 	} payload;
 };
 

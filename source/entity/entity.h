@@ -29,6 +29,7 @@
 enum entity_type {
 	ENTITY_LOCAL_PLAYER = 0,
 	ENTITY_ITEM,
+	ENTITY_PIG,
 	ENTITY_TYPE_COUNT,
 };
 
@@ -130,6 +131,8 @@ bool entity_local_player_block_collide(vec3 pos, struct block_info* blk_info);
 void entity_item(uint32_t id, struct entity* e, bool server, void* world,
 				 struct item_data it);
 
+void entity_pig(uint32_t id, struct entity* e, bool server, void* world);
+
 uint32_t entity_gen_id(dict_entity_t dict);
 void entities_client_tick(dict_entity_t dict);
 void entities_client_render(dict_entity_t dict, struct camera* c,
@@ -177,6 +180,14 @@ struct entity_local_player {
 struct entity_item {
 	struct item_data item;
 	int age;
+};
+
+// Per-instance pig state. Wander timer counts down each server tick; when it
+// hits zero a new random direction is chosen and the timer restarts.
+struct entity_pig_data {
+	int wander_ticks;
+	float wander_dx;
+	float wander_dz;
 };
 
 #endif

@@ -40,6 +40,7 @@ enum client_rpc_type {
 	CRPC_ENTITY_DESTROY,
 	CRPC_ENTITY_MOVE,
 	CRPC_OPEN_WINDOW,
+	CRPC_SPAWN_MOB,
 };
 
 struct client_rpc {
@@ -100,6 +101,11 @@ struct client_rpc {
 			uint32_t entity_id;
 			vec3 pos;
 		} entity_move;
+		struct {
+			uint32_t entity_id;
+			uint8_t mob_type;     // enum entity_type
+			vec3 pos;
+		} spawn_mob;
 	} payload;
 };
 

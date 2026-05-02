@@ -271,6 +271,36 @@ static void server_local_process(struct server_rpc* call, void* user) {
 				}
 			}
 			break;
+		case SRPC_DEBUG_SPAWN: {
+			// Dev console: spawn a single mob ~3 blocks in front of the
+			// player. Only ENTITY_PIG is wired today; other types are no-ops
+			// until their server-side create function exists.
+			if(!s->player.has_pos)
+				break;
+			float yaw = s->player.rx;
+			vec3 spawn_pos = {
+				s->player.x + sinf(yaw) * 3.0F,
+				s->player.y,
+				s->player.z + cosf(yaw) * 3.0F,
+			};
+			uint8_t mob_type = call->payload.debug_spawn.mob_type;
+			uint32_t eid = entity_gen_id(s->entities);
+			struct entity* e = dict_entity_safe_get(s->entities, eid);
+			if(mob_type == ENTITY_PIG) {
+				entity_pig(eid, e, true, &s->world);
+				entity_call_teleport(e, spawn_pos);
+				clin_rpc_send(&(struct client_rpc) {
+					.type = CRPC_SPAWN_MOB,
+					.payload.spawn_mob.entity_id = eid,
+					.payload.spawn_mob.mob_type = mob_type,
+					.payload.spawn_mob.pos = {spawn_pos[0], spawn_pos[1],
+											  spawn_pos[2]},
+				});
+			} else {
+				dict_entity_erase(s->entities, eid);
+			}
+			break;
+		}
 		case SRPC_PLAYER_DEATH: {
 			// Spawn each non-empty inventory slot as a thrown item entity at
 			// the player's position, then clear and sync the slot to the

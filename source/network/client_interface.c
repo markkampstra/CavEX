@@ -225,6 +225,22 @@ void clin_process(struct client_rpc* call) {
 						&gstate.world, call->payload.spawn_item.item);
 			entity_call_teleport(e, call->payload.spawn_item.pos);
 		} break;
+		case CRPC_SPAWN_MOB: {
+			struct entity* e = dict_entity_safe_get(
+				gstate.entities, call->payload.spawn_mob.entity_id);
+			switch(call->payload.spawn_mob.mob_type) {
+				case ENTITY_PIG:
+					entity_pig(call->payload.spawn_mob.entity_id, e, false,
+							   &gstate.world);
+					break;
+				default:
+					// Unknown mob type -- still place an entity so the slot
+					// isn't dangling in the dict. Behaviour is whatever the
+					// (unset) registry returns, which is "do nothing".
+					break;
+			}
+			entity_call_teleport(e, call->payload.spawn_mob.pos);
+		} break;
 		case CRPC_PICKUP_ITEM: {
 			if(gstate.local_player
 			   && call->payload.pickup_item.collector_id

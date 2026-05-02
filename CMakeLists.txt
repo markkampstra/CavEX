@@ -79,6 +79,7 @@ add_executable(cavex
 				source/entity/entity_local_player.c
 				source/entity/entity_item.c
 				source/entity/entity_registry.c
+				source/entity/mob/entity_pig.c
 
 				source/cNBT/buffer.c
 				source/cNBT/nbt_loading.c

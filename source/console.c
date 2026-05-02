@@ -26,6 +26,7 @@
 #include "console.h"
 #include "daytime.h"
 #include "game/game_state.h"
+#include "network/server_interface.h"
 #include "platform/thread.h"
 #include "platform/time.h"
 
@@ -53,6 +54,7 @@ static void cmd_quit(int argc, char** argv);
 static void cmd_time(int argc, char** argv);
 static void cmd_tp(int argc, char** argv);
 static void cmd_ambient(int argc, char** argv);
+static void cmd_spawn(int argc, char** argv);
 
 static const struct cmd cmds[] = {
 	{"help", "help", cmd_help},
@@ -60,6 +62,7 @@ static const struct cmd cmds[] = {
 	{"time", "time <ticks|day|night>", cmd_time},
 	{"tp", "tp <x> <y> <z>", cmd_tp},
 	{"ambient", "ambient <0.0-1.0>  (night-side brightness floor)", cmd_ambient},
+	{"spawn", "spawn <pig>           (3 blocks in front of player)", cmd_spawn},
 };
 static const size_t cmd_count = sizeof(cmds) / sizeof(cmds[0]);
 
@@ -189,6 +192,25 @@ static void cmd_ambient(int argc, char** argv) {
 	}
 	gstate.config.ambient_floor = v;
 	printf("[console] ambient floor set to %.2f\n", v);
+}
+
+static void cmd_spawn(int argc, char** argv) {
+	if(argc < 2) {
+		printf("[console] usage: spawn <pig>\n");
+		return;
+	}
+	uint8_t mob_type;
+	if(strcmp(argv[1], "pig") == 0) {
+		mob_type = ENTITY_PIG;
+	} else {
+		printf("[console] unknown mob type: %s (try `pig`)\n", argv[1]);
+		return;
+	}
+	svin_rpc_send(&(struct server_rpc) {
+		.type = SRPC_DEBUG_SPAWN,
+		.payload.debug_spawn.mob_type = mob_type,
+	});
+	printf("[console] spawn request sent (%s)\n", argv[1]);
 }
 
 static void cmd_tp(int argc, char** argv) {
