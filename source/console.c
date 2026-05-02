@@ -55,6 +55,7 @@ static void cmd_time(int argc, char** argv);
 static void cmd_tp(int argc, char** argv);
 static void cmd_ambient(int argc, char** argv);
 static void cmd_spawn(int argc, char** argv);
+static void cmd_kill(int argc, char** argv);
 
 static const struct cmd cmds[] = {
 	{"help", "help", cmd_help},
@@ -63,6 +64,7 @@ static const struct cmd cmds[] = {
 	{"tp", "tp <x> <y> <z>", cmd_tp},
 	{"ambient", "ambient <0.0-1.0>  (night-side brightness floor)", cmd_ambient},
 	{"spawn", "spawn <pig|cow>       (3 blocks in front of player)", cmd_spawn},
+	{"kill", "kill                  (kill every mob, triggers drops)", cmd_kill},
 };
 static const size_t cmd_count = sizeof(cmds) / sizeof(cmds[0]);
 
@@ -192,6 +194,15 @@ static void cmd_ambient(int argc, char** argv) {
 	}
 	gstate.config.ambient_floor = v;
 	printf("[console] ambient floor set to %.2f\n", v);
+}
+
+static void cmd_kill(int argc, char** argv) {
+	(void)argc;
+	(void)argv;
+	svin_rpc_send(&(struct server_rpc) {
+		.type = SRPC_DEBUG_KILL_ALL,
+	});
+	printf("[console] kill request sent\n");
 }
 
 static void cmd_spawn(int argc, char** argv) {

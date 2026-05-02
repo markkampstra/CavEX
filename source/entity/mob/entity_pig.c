@@ -112,6 +112,20 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	entity_shadow(e, &shadow_bbox, view);
 }
 
+static void entity_pig_on_death(struct entity* e, struct server_local* s) {
+	// Beta pigs drop 0-2 raw porkchops on death.
+	int count = (int)(rand_gen_flt(&s->rand_src) * 3.0F); // 0,1,2
+	for(int k = 0; k < count; k++) {
+		struct item_data drop = {
+			.id = ITEM_PORKCHOP,
+			.count = 1,
+			.durability = 0,
+		};
+		vec3 dpos = {e->pos[0], e->pos[1] + 0.5F, e->pos[2]};
+		server_local_spawn_item(dpos, &drop, false, s);
+	}
+}
+
 static const struct entity_type_def entity_pig_def = {
 	.name = "pig",
 	.data_size = sizeof(struct entity_pig_data),
@@ -121,7 +135,7 @@ static const struct entity_type_def entity_pig_def = {
 	.render = entity_pig_render,
 	.teleport = entity_default_teleport,
 	.on_damage = NULL,
-	.on_death = NULL,
+	.on_death = entity_pig_on_death,
 };
 
 void entity_pig_register(void) {

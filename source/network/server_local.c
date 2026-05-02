@@ -33,6 +33,82 @@
 #define CHUNK_DIST2(x1, x2, z1, z2)                                            \
 	(((x1) - (x2)) * ((x1) - (x2)) + ((z1) - (z2)) * ((z1) - (z2)))
 
+// Periodic natural spawner. Beta passive-mob rules collapsed to a minimum:
+// every ~10 seconds, pick a random tile within 16 blocks of the player,
+// walk down from the world ceiling to the first solid block, and spawn a
+// pig or cow there if (a) the block is grass, (b) the block above is air,
+// (c) the air block has sky_light >= 9 (Beta daytime requirement). Caps
+// total passive mobs at 8 across the loaded world.
+static void server_local_try_natural_spawn(struct server_local* s) {
+	static int cooldown = 200; // first attempt 10s after world load
+
+	if(!s->player.has_pos)
+		return;
+	if(cooldown > 0) {
+		cooldown--;
+		return;
+	}
+	cooldown = 200;
+
+	int count = 0;
+	dict_entity_it_t cit;
+	dict_entity_it(cit, s->entities);
+	while(!dict_entity_end_p(cit)) {
+		struct entity* ce = &dict_entity_ref(cit)->value;
+		if(ce->type == ENTITY_PIG || ce->type == ENTITY_COW)
+			count++;
+		dict_entity_next(cit);
+	}
+	if(count >= 8)
+		return;
+
+	int dx = (int)((rand_gen_flt(&s->rand_src) - 0.5F) * 32.0F);
+	int dz = (int)((rand_gen_flt(&s->rand_src) - 0.5F) * 32.0F);
+	w_coord_t x = (w_coord_t)floorf(s->player.x) + dx;
+	w_coord_t z = (w_coord_t)floorf(s->player.z) + dz;
+
+	w_coord_t y;
+	bool found = false;
+	for(y = WORLD_HEIGHT - 2; y >= 1; y--) {
+		struct block_data b, above;
+		if(!server_world_get_block(&s->world, x, y, z, &b))
+			break; // chunk not loaded; bail
+		if(b.type == BLOCK_AIR)
+			continue;
+		if(b.type != BLOCK_GRASS)
+			return;
+		if(!server_world_get_block(&s->world, x, y + 1, z, &above))
+			return;
+		if(above.type != BLOCK_AIR)
+			return;
+		if(above.sky_light < 9)
+			return;
+		found = true;
+		break;
+	}
+	if(!found)
+		return;
+
+	bool is_cow = rand_gen_flt(&s->rand_src) < 0.5F;
+	uint8_t mob_type = is_cow ? ENTITY_COW : ENTITY_PIG;
+	uint32_t eid = entity_gen_id(s->entities);
+	struct entity* e = dict_entity_safe_get(s->entities, eid);
+	if(is_cow)
+		entity_cow(eid, e, true, &s->world);
+	else
+		entity_pig(eid, e, true, &s->world);
+
+	vec3 pos = {x + 0.5F, y + 1.0F, z + 0.5F};
+	entity_call_teleport(e, pos);
+
+	clin_rpc_send(&(struct client_rpc) {
+		.type = CRPC_SPAWN_MOB,
+		.payload.spawn_mob.entity_id = eid,
+		.payload.spawn_mob.mob_type = mob_type,
+		.payload.spawn_mob.pos = {pos[0], pos[1], pos[2]},
+	});
+}
+
 struct entity* server_local_spawn_item(vec3 pos, struct item_data* it,
 									   bool throw, struct server_local* s) {
 	uint32_t entity_id = entity_gen_id(s->entities);
@@ -314,6 +390,20 @@ static void server_local_process(struct server_rpc* call, void* user) {
 			}
 			break;
 		}
+		case SRPC_DEBUG_KILL_ALL: {
+			// Walk the entity dict and apply enough damage to kill every
+			// living mob. The on_death hooks fire during the next tick when
+			// remove triggers, so drops appear naturally.
+			dict_entity_it_t kit;
+			dict_entity_it(kit, s->entities);
+			while(!dict_entity_end_p(kit)) {
+				struct entity* ke = &dict_entity_ref(kit)->value;
+				if(ke->max_health > 0 && ke->type != ENTITY_LOCAL_PLAYER)
+					entity_damage(ke, 9999, DMG_GENERIC);
+				dict_entity_next(kit);
+			}
+			break;
+		}
 		case SRPC_PLAYER_DEATH: {
 			// Spawn each non-empty inventory slot as a thrown item entity at
 			// the player's position, then clear and sync the slot to the
@@ -421,6 +511,11 @@ static void server_local_update(struct server_local* s) {
 			dict_entity_next(it);
 
 			if(remove) {
+				// Run the type's death hook before tearing the entity down
+				// so it can still spawn drops at e->pos and read e->health
+				// to distinguish "killed" from "despawned by timeout".
+				if(edef->on_death)
+					edef->on_death(e, s);
 				clin_rpc_send(&(struct client_rpc) {
 					.type = CRPC_ENTITY_DESTROY,
 					.payload.entity_destroy.entity_id = key,
@@ -445,6 +540,8 @@ static void server_local_update(struct server_local* s) {
 
 	server_world_random_tick(&s->world, &s->rand_src, s, px, pz,
 							 MAX_VIEW_DISTANCE - 2);
+
+	server_local_try_natural_spawn(s);
 
 	w_coord_t cx, cz;
 	if(server_world_furthest_chunk(&s->world, MAX_VIEW_DISTANCE, px, pz, &cx,

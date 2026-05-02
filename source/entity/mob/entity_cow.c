@@ -94,6 +94,20 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	entity_shadow(e, &shadow_bbox, view);
 }
 
+static void entity_cow_on_death(struct entity* e, struct server_local* s) {
+	// Beta cows drop 0-2 leather on death (raw beef wasn't in beta 1.7.3).
+	int count = (int)(rand_gen_flt(&s->rand_src) * 3.0F);
+	for(int k = 0; k < count; k++) {
+		struct item_data drop = {
+			.id = ITEM_LEATHER,
+			.count = 1,
+			.durability = 0,
+		};
+		vec3 dpos = {e->pos[0], e->pos[1] + 0.5F, e->pos[2]};
+		server_local_spawn_item(dpos, &drop, false, s);
+	}
+}
+
 static const struct entity_type_def entity_cow_def = {
 	.name = "cow",
 	.data_size = sizeof(struct entity_cow_data),
@@ -103,7 +117,7 @@ static const struct entity_type_def entity_cow_def = {
 	.render = entity_cow_render,
 	.teleport = entity_default_teleport,
 	.on_damage = NULL,
-	.on_death = NULL,
+	.on_death = entity_cow_on_death,
 };
 
 void entity_cow_register(void) {

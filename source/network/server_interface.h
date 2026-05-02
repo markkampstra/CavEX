@@ -35,6 +35,7 @@ enum server_rpc_type {
 	SRPC_WINDOW_CLOSE,
 	SRPC_PLAYER_DEATH,
 	SRPC_DEBUG_SPAWN,        // dev console: spawn a mob near the player
+	SRPC_DEBUG_KILL_ALL,     // dev console: damage every mob to death
 };
 
 struct server_rpc {
