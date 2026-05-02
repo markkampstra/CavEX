@@ -162,10 +162,14 @@ static void screen_ingame_update(struct screen* s, float dt) {
 	// Once the death animation has played out, hand off to the dead screen.
 	// max_health > 0 gates this to actual living entities (player) and
 	// avoids tripping during the brief frame between world load and player
-	// creation.
+	// creation. The SRPC_PLAYER_DEATH dispatch only fires once per death
+	// because screen_set switches us off this screen before the next tick.
 	if(gstate.local_player && gstate.local_player->max_health > 0
 	   && gstate.local_player->health <= 0
 	   && gstate.local_player->death_time > 20) {
+		svin_rpc_send(&(struct server_rpc) {
+			.type = SRPC_PLAYER_DEATH,
+		});
 		screen_set(&screen_dead);
 		return;
 	}

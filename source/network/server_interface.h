@@ -33,6 +33,7 @@ enum server_rpc_type {
 	SRPC_BLOCK_DIG,
 	SRPC_WINDOW_CLICK,
 	SRPC_WINDOW_CLOSE,
+	SRPC_PLAYER_DEATH,
 };
 
 struct server_rpc {
