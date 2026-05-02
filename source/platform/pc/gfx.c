@@ -203,6 +203,8 @@ void gfx_finish(bool vsync) {
 	gfx_write_buffers(true, true, true);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glfwPollEvents();
+	if(glfwWindowShouldClose(window))
+		gstate.quit = true;
 }
 
 void gfx_flip_buffers(float* gpu_wait, float* vsync_wait) {
