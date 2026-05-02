@@ -66,7 +66,11 @@ int main(void) {
 	fatInitDefault();
 #endif
 
+#ifdef PLATFORM_PC
+	config_create(&gstate.config_user, "config_pc.json");
+#else
 	config_create(&gstate.config_user, "config.json");
+#endif
 
 	input_init();
 	blocks_init();
