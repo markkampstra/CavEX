@@ -101,7 +101,8 @@ static bool entity_tick(struct entity* e) {
 	int strafe = 0;
 	bool jumping = false;
 
-	if(e->data.local_player.capture_input) {
+	struct entity_local_player* lp = ENTITY_DATA(e, entity_local_player);
+	if(lp->capture_input) {
 		if(input_held(IB_FORWARD))
 			forward++;
 
@@ -130,18 +131,18 @@ static bool entity_tick(struct entity* e) {
 		e->vel[2] += 0.1F * powf(0.6F / slipperiness, 3.0F) * dy;
 	}
 
-	if(e->data.local_player.jump_ticks > 0)
-		e->data.local_player.jump_ticks--;
+	if(lp->jump_ticks > 0)
+		lp->jump_ticks--;
 
 	if(jumping) {
 		if(in_water || in_lava) {
 			e->vel[1] += 0.04F;
-		} else if(e->on_ground && e->data.local_player.jump_ticks == 0) {
+		} else if(e->on_ground && lp->jump_ticks == 0) {
 			e->vel[1] = 0.42F;
-			e->data.local_player.jump_ticks = 10;
+			lp->jump_ticks = 10;
 		}
 	} else {
-		e->data.local_player.jump_ticks = 0;
+		lp->jump_ticks = 0;
 	}
 
 	aabb_setsize_centered(&bbox, 0.6F, 1.8F, 0.6F);
@@ -291,19 +292,33 @@ bool entity_local_player_block_collide(vec3 pos, struct block_info* blk_info) {
 	return entity_block_aabb_test(&bbox, blk_info);
 }
 
+static const struct entity_type_def entity_local_player_def = {
+	.name = "local_player",
+	.data_size = sizeof(struct entity_local_player),
+	.default_max_health = 20,
+	.tick_client = entity_tick,
+	.tick_server = NULL,
+	.render = NULL,
+	.teleport = entity_default_teleport,
+	.on_damage = NULL,
+	.on_death = NULL,
+};
+
+void entity_local_player_register(void) {
+	entity_register_type(ENTITY_LOCAL_PLAYER, &entity_local_player_def);
+}
+
 void entity_local_player(uint32_t id, struct entity* e, struct world* w) {
 	assert(e && w);
 
 	e->id = id;
-	e->tick_server = NULL;
-	e->tick_client = entity_tick;
-	e->render = NULL;
-	e->teleport = entity_default_teleport;
 	e->type = ENTITY_LOCAL_PLAYER;
-	e->data.local_player.capture_input = false;
 
 	entity_default_init(e, false, w);
-	e->data.local_player.jump_ticks = 0;
+
+	struct entity_local_player* lp = ENTITY_DATA(e, entity_local_player);
+	lp->jump_ticks = 0;
+	lp->capture_input = false;
 
 	// Beta player has 20 HP (10 hearts) and 300 ticks of breath.
 	e->max_health = 20;

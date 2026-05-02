@@ -206,7 +206,7 @@ static void cmd_tp(int argc, char** argv) {
 		(float)atof(argv[2]),
 		(float)atof(argv[3]),
 	};
-	gstate.local_player->teleport(gstate.local_player, pos);
+	entity_call_teleport(gstate.local_player, pos);
 	printf("[console] teleported to (%.2f, %.2f, %.2f)\n", pos[0], pos[1],
 		   pos[2]);
 }

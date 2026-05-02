@@ -45,7 +45,6 @@ void entity_default_init(struct entity* e, bool server, void* world) {
 	e->air = 300;
 	e->fall_distance = 0.0F;
 	glm_vec3_zero(e->motion_pushback);
-	e->on_damage = NULL;
 }
 
 void entity_default_teleport(struct entity* e, vec3 pos) {
@@ -79,8 +78,9 @@ void entity_damage(struct entity* e, int amount, enum damage_source src) {
 	if(e->hurt_time > 0 && src != DMG_VOID)
 		return;
 
-	if(e->on_damage) {
-		e->on_damage(e, amount, src);
+	const struct entity_type_def* def = entity_get_def(e->type);
+	if(def && def->on_damage) {
+		def->on_damage(e, amount, src);
 		return;
 	}
 
@@ -369,8 +369,7 @@ void entities_client_tick(dict_entity_t dict) {
 	while(!dict_entity_end_p(it)) {
 		struct entity* e = &dict_entity_ref(it)->value;
 
-		if(e->tick_client)
-			e->tick_client(e);
+		entity_call_tick_client(e);
 
 		dict_entity_next(it);
 	}
@@ -383,10 +382,11 @@ void entities_client_render(dict_entity_t dict, struct camera* c,
 
 	while(!dict_entity_end_p(it)) {
 		struct entity* e = &dict_entity_ref(it)->value;
-		if(e->render
+		const struct entity_type_def* d = entity_get_def(e->type);
+		if(d && d->render
 		   && glm_vec3_distance2(e->pos, (vec3) {c->x, c->y, c->z})
 			   < glm_pow2(32.0F))
-			e->render(e, c->view, tick_delta);
+			d->render(e, c->view, tick_delta);
 		dict_entity_next(it);
 	}
 }

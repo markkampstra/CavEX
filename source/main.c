@@ -78,6 +78,7 @@ int main(void) {
 	blocks_init();
 	items_init();
 	recipe_init();
+	entity_registry_init();
 	gfx_setup();
 	gutil_init();
 

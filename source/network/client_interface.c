@@ -98,7 +98,7 @@ void clin_process(struct client_rpc* call) {
 			gstate.camera.ry = glm_rad(glm_clamp(
 				call->payload.player_pos.rotation[1] + 90.0F, 0.0F, 180.0F));
 			if(gstate.local_player)
-				gstate.local_player->teleport(
+				entity_call_teleport(
 					gstate.local_player,
 					(vec3) {call->payload.player_pos.position[0],
 							call->payload.player_pos.position[1],
@@ -223,7 +223,7 @@ void clin_process(struct client_rpc* call) {
 				gstate.entities, call->payload.spawn_item.entity_id);
 			entity_item(call->payload.spawn_item.entity_id, e, false,
 						&gstate.world, call->payload.spawn_item.item);
-			e->teleport(e, call->payload.spawn_item.pos);
+			entity_call_teleport(e, call->payload.spawn_item.pos);
 		} break;
 		case CRPC_PICKUP_ITEM: {
 			if(gstate.local_player

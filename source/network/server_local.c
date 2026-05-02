@@ -38,7 +38,7 @@ struct entity* server_local_spawn_item(vec3 pos, struct item_data* it,
 	uint32_t entity_id = entity_gen_id(s->entities);
 	struct entity* e = dict_entity_safe_get(s->entities, entity_id);
 	entity_item(entity_id, e, true, &s->world, *it);
-	e->teleport(e, pos);
+	entity_call_teleport(e, pos);
 
 	if(throw) {
 		float rx = glm_rad(-s->player.rx
@@ -61,7 +61,7 @@ struct entity* server_local_spawn_item(vec3 pos, struct item_data* it,
 	clin_rpc_send(&(struct client_rpc) {
 		.type = CRPC_SPAWN_ITEM,
 		.payload.spawn_item.entity_id = e->id,
-		.payload.spawn_item.item = e->data.item.item,
+		.payload.spawn_item.item = ENTITY_DATA(e, entity_item)->item,
 		.payload.spawn_item.pos = {e->pos[0], e->pos[1], e->pos[2]},
 	});
 
@@ -372,8 +372,9 @@ static void server_local_update(struct server_local* s) {
 		uint32_t key = dict_entity_ref(it)->key;
 		struct entity* e = &dict_entity_ref(it)->value;
 
-		if(e->tick_server) {
-			bool remove = (e->delay_destroy == 0) || e->tick_server(e, s);
+		const struct entity_type_def* edef = entity_get_def(e->type);
+		if(edef && edef->tick_server) {
+			bool remove = (e->delay_destroy == 0) || edef->tick_server(e, s);
 			dict_entity_next(it);
 
 			if(remove) {

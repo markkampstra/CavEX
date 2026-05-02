@@ -42,7 +42,8 @@ static void screen_dead_reset(struct screen* s, int width, int height) {
 	(void)height;
 	input_pointer_enable(true);
 	if(gstate.local_player)
-		gstate.local_player->data.local_player.capture_input = false;
+		ENTITY_DATA(gstate.local_player, entity_local_player)->capture_input
+			= false;
 	selection = BTN_RESPAWN;
 }
 

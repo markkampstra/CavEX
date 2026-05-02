@@ -26,7 +26,7 @@
 
 static bool entity_client_tick(struct entity* e) {
 	entity_default_client_tick(e);
-	e->data.item.age++;
+	ENTITY_DATA(e, entity_item)->age++;
 	return false;
 }
 
@@ -85,11 +85,12 @@ static bool entity_server_tick(struct entity* e, struct server_local* s) {
 	e->vel[2] *= (e->on_ground ? 0.6F : 1.0F) * 0.98F;
 	e->vel[1] *= 0.98F;
 
-	e->data.item.age++;
+	struct entity_item* itd = ENTITY_DATA(e, entity_item);
+	itd->age++;
 
 	if(e->delay_destroy > 0) {
 		e->delay_destroy--;
-	} else if(e->data.item.age >= 2 * 20
+	} else if(itd->age >= 2 * 20
 			  && glm_vec3_distance2(
 					 e->pos,
 					 (vec3) {s->player.x, s->player.y - 0.6F, s->player.z})
@@ -98,7 +99,7 @@ static bool entity_server_tick(struct entity* e, struct server_local* s) {
 		if(s->player.active_inventory && s->player.active_inventory->logic
 		   && s->player.active_inventory->logic->on_collect)
 			s->player.active_inventory->logic->on_collect(
-				s->player.active_inventory, &e->data.item.item);
+				s->player.active_inventory, &itd->item);
 
 		clin_rpc_send(&(struct client_rpc) {
 			.type = CRPC_PICKUP_ITEM,
@@ -109,11 +110,12 @@ static bool entity_server_tick(struct entity* e, struct server_local* s) {
 		e->delay_destroy = 1;
 	}
 
-	return e->data.item.age >= 5 * 60 * 20; // destroy after 5 min
+	return itd->age >= 5 * 60 * 20; // destroy after 5 min
 }
 
 static void entity_render(struct entity* e, mat4 view, float tick_delta) {
-	struct item* it = item_get(&e->data.item.item);
+	struct entity_item* itd = ENTITY_DATA(e, entity_item);
+	struct item* it = item_get(&itd->item);
 
 	if(it) {
 		vec3 pos_lerp;
@@ -125,7 +127,7 @@ static void entity_render(struct entity* e, mat4 view, float tick_delta) {
 		render_item_update_light((in_block.torch_light << 4)
 								 | in_block.sky_light);
 
-		float ticks = e->data.item.age + tick_delta;
+		float ticks = itd->age + tick_delta;
 
 		mat4 model;
 		glm_translate_make(model, pos_lerp);
@@ -138,11 +140,11 @@ static void entity_render(struct entity* e, mat4 view, float tick_delta) {
 		glm_mat4_mul(view, model, mv);
 
 		int amount = 1;
-		if(e->data.item.item.count > 20) {
+		if(itd->item.count > 20) {
 			amount = 4;
-		} else if(e->data.item.item.count > 5) {
+		} else if(itd->item.count > 5) {
 			amount = 3;
-		} else if(e->data.item.item.count > 1) {
+		} else if(itd->item.count > 1) {
 			amount = 2;
 		}
 
@@ -158,7 +160,7 @@ static void entity_render(struct entity* e, mat4 view, float tick_delta) {
 			glm_translate_make(final, displacement[k]);
 			glm_mat4_mul(mv, final, final);
 
-			it->renderItem(it, &e->data.item.item, final, false,
+			it->renderItem(it, &itd->item, final, false,
 						   R_ITEM_ENV_ENTITY);
 		}
 
@@ -169,18 +171,32 @@ static void entity_render(struct entity* e, mat4 view, float tick_delta) {
 	}
 }
 
+static const struct entity_type_def entity_item_def = {
+	.name = "item",
+	.data_size = sizeof(struct entity_item),
+	.default_max_health = 0,         // dropped items don't take damage
+	.tick_client = entity_client_tick,
+	.tick_server = entity_server_tick,
+	.render = entity_render,
+	.teleport = entity_default_teleport,
+	.on_damage = NULL,
+	.on_death = NULL,
+};
+
+void entity_item_register(void) {
+	entity_register_type(ENTITY_ITEM, &entity_item_def);
+}
+
 void entity_item(uint32_t id, struct entity* e, bool server, void* world,
 				 struct item_data it) {
 	assert(e && world);
 
 	e->id = id;
-	e->tick_server = entity_server_tick;
-	e->tick_client = entity_client_tick;
-	e->render = entity_render;
-	e->teleport = entity_default_teleport;
 	e->type = ENTITY_ITEM;
-	e->data.item.age = 0;
-	e->data.item.item = it;
 
 	entity_default_init(e, server, world);
+
+	struct entity_item* itd = ENTITY_DATA(e, entity_item);
+	itd->age = 0;
+	itd->item = it;
 }

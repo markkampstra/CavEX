@@ -39,7 +39,8 @@ static void screen_ingame_reset(struct screen* s, int width, int height) {
 	input_pointer_enable(false);
 
 	if(gstate.local_player)
-		gstate.local_player->data.local_player.capture_input = true;
+		ENTITY_DATA(gstate.local_player, entity_local_player)->capture_input
+			= true;
 }
 
 void screen_ingame_render3D(struct screen* s, mat4 view) {

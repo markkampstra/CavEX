@@ -27,8 +27,9 @@
 #include "../item/items.h"
 
 enum entity_type {
-	ENTITY_LOCAL_PLAYER,
+	ENTITY_LOCAL_PLAYER = 0,
 	ENTITY_ITEM,
+	ENTITY_TYPE_COUNT,
 };
 
 // Damage causes; mirrors Beta 1.7.3's net.minecraft.util.DamageSource
@@ -48,6 +49,17 @@ enum damage_source {
 };
 
 struct server_local;
+
+// Per-entity custom storage. Each entity_type_def declares how big its data
+// struct is via data_size, and the type's tick/render code casts e->data
+// through the ENTITY_DATA(e, T) macro. The buffer is sized for the largest
+// known type so we never need to allocate or free anything; m-lib's POD
+// oplist on dict_entity continues to work unchanged.
+//
+// If a new type's struct exceeds ENTITY_DATA_MAX, the static_assert in
+// entity_registry.c will fail at compile time -- raise the limit there.
+#define ENTITY_DATA_MAX 64
+#define ENTITY_DATA(e, T) ((struct T*)(void*)((e)->data))
 
 struct entity {
 	uint32_t id;
@@ -77,30 +89,40 @@ struct entity {
 	float fall_distance;
 	vec3 motion_pushback;
 
-	bool (*tick_client)(struct entity*);
-	bool (*tick_server)(struct entity*, struct server_local*);
-	void (*render)(struct entity*, mat4, float);
-	void (*teleport)(struct entity*, vec3);
-	// Optional per-type damage hook. NULL means "use the default rules in
-	// entity_damage". Non-NULL lets a mob override (e.g. creeper starts fuse).
-	void (*on_damage)(struct entity*, int amount, enum damage_source src);
-
 	enum entity_type type;
-	union entity_data {
-		struct entity_local_player {
-			int jump_ticks;
-			bool capture_input;
-		} local_player;
-		struct entity_item {
-			struct item_data item;
-			int age;
-		} item;
-	} data;
+	uint8_t data[ENTITY_DATA_MAX];
 };
 
 DICT_DEF2(dict_entity, uint32_t, M_BASIC_OPLIST, struct entity, M_POD_OPLIST)
 
 #include "../world.h"
+
+// Per-type behaviour table. Each entity_type registers exactly one of these
+// at startup via entity_register_type(); the engine looks it up by type to
+// dispatch ticks, rendering, teleports, damage hooks, etc.
+struct entity_type_def {
+	const char* name;
+	size_t data_size;          // must be <= ENTITY_DATA_MAX
+	int16_t default_max_health;
+
+	bool (*tick_client)(struct entity*);
+	bool (*tick_server)(struct entity*, struct server_local*);
+	void (*render)(struct entity*, mat4 view, float tick_delta);
+	void (*teleport)(struct entity*, vec3 pos);
+	void (*on_damage)(struct entity*, int amount, enum damage_source src);
+	void (*on_death)(struct entity*, struct server_local*);
+};
+
+void entity_register_type(enum entity_type t, const struct entity_type_def* d);
+const struct entity_type_def* entity_get_def(enum entity_type t);
+void entity_registry_init(void);  // calls each type's registration once
+
+// Convenience: dispatch the type's hook if registered. Safe to call when no
+// def has been installed (returns false / no-op).
+bool entity_call_tick_client(struct entity* e);
+bool entity_call_tick_server(struct entity* e, struct server_local* s);
+void entity_call_render(struct entity* e, mat4 view, float tick_delta);
+void entity_call_teleport(struct entity* e, vec3 pos);
 
 void entity_local_player(uint32_t id, struct entity* e, struct world* w);
 bool entity_local_player_block_collide(vec3 pos, struct block_info* blk_info);
@@ -143,5 +165,18 @@ bool entity_block_aabb_test(struct AABB* entity, struct block_info* blk_info);
 bool entity_aabb_intersection(struct entity* e, struct AABB* a);
 void entity_try_move(struct entity* e, vec3 pos, vec3 vel, struct AABB* bbox,
 					 size_t coord, bool* collision_xz, bool* on_ground);
+
+// Per-type private data structs. Declared here so headers that need to peek
+// (server_local for ENTITY_ITEM payloads, screens for ENTITY_LOCAL_PLAYER's
+// capture_input flag) can do so via the ENTITY_DATA() cast macro.
+struct entity_local_player {
+	int jump_ticks;
+	bool capture_input;
+};
+
+struct entity_item {
+	struct item_data item;
+	int age;
+};
 
 #endif

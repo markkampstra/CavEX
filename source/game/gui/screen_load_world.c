@@ -27,7 +27,8 @@ static void screen_lworld_reset(struct screen* s, int width, int height) {
 	input_pointer_enable(false);
 
 	if(gstate.local_player)
-		gstate.local_player->data.local_player.capture_input = false;
+		ENTITY_DATA(gstate.local_player, entity_local_player)->capture_input
+			= false;
 }
 
 static void screen_lworld_update(struct screen* s, float dt) {
