@@ -42,7 +42,7 @@ You need to download these libraries yourself and place their source files to th
 | [cglm](https://github.com/recp/cglm) | `include/cglm/` | `source/cglm/` |
 | [cNBT](https://github.com/chmod222/cNBT) | `buffer.c`, `buffer.h`, `list.h`, `nbt_loading.c`, `nbt_parsing.c`, `nbt_treeops.c`, `nbt_util.c` and `nbt.h` | `source/cNBT/` |
 | [parson](https://github.com/kgabis/parson) | `parson.h` and `parson.c` | `source/parson/` |
-| [M*LIB](https://github.com/P-p-H-d/mlib) | any root `*.h` | compiler include path |
+| [M*LIB](https://github.com/P-p-H-d/mlib) | any root `*.h` | `extern/m-lib/` |
 
 ### Wii
 
@@ -92,3 +92,20 @@ make
 ```
 
 Please also copy the fragment and vertex shaders from `resources/` next to your `assets/` directory.
+
+### macOS
+
+The build also works on macOS (tested on Apple Silicon). Install the same dependencies via Homebrew:
+
+```bash
+brew install cmake glfw glew
+```
+
+Then build with CMake the same way as the GNU/Linux instructions above. CMake should auto-discover the Homebrew-installed libraries; if not, point it at the prefix:
+
+```bash
+cmake .. -DCMAKE_PREFIX_PATH=/opt/homebrew
+make
+```
+
+The PC build automatically loads `config_pc.json` (the GLFW key bindings) instead of the Wii's `config.json`, so no manual config swap is needed.

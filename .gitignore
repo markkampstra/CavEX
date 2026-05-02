@@ -1,0 +1,16 @@
+# CMake build directory (PC build, per README)
+build_pc/
+
+# Runtime save data
+saves/
+
+# Third-party libraries the user fetches themselves (see README)
+source/cNBT/
+source/cglm/
+source/lodepng/
+source/parson/
+extern/
+
+# Local copies of shaders next to assets (originals live in resources/)
+assets/fragment.shader
+assets/vertex.shader
