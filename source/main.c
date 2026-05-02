@@ -29,6 +29,7 @@
 #endif
 
 #include "chunk_mesher.h"
+#include "console.h"
 #include "daytime.h"
 #include "game/game_state.h"
 #include "game/gui/screen.h"
@@ -97,6 +98,8 @@ int main(void) {
 	struct server_local server;
 	server_local_create(&server);
 
+	console_init();
+
 	ptime_t last_frame = time_get();
 	ptime_t last_tick = last_frame;
 
@@ -105,6 +108,8 @@ int main(void) {
 		gstate.stats.dt = time_diff_s(last_frame, this_frame);
 		gstate.stats.fps = 1.0F / gstate.stats.dt;
 		last_frame = this_frame;
+
+		console_poll();
 
 		float daytime
 			= (float)((gstate.world_time
