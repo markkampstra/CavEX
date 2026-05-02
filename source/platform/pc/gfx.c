@@ -21,7 +21,11 @@
 #include <GLFW/glfw3.h>
 #include <assert.h>
 #include <m-lib/m-string.h>
+#ifdef __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include <math.h>
 #include <string.h>
 

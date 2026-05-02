@@ -29,7 +29,11 @@
 #include "../../platform/input.h"
 #include "../game_state.h"
 
+#ifdef __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 
 static void screen_ingame_reset(struct screen* s, int width, int height) {
 	input_pointer_enable(false);
