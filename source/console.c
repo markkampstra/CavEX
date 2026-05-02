@@ -156,9 +156,9 @@ static void cmd_time(int argc, char** argv) {
 
 	long t;
 	if(strcmp(argv[1], "day") == 0) {
-		t = 0;
+		t = DAY_LENGTH_TICKS / 4;        // 6000: noon, brightest
 	} else if(strcmp(argv[1], "night") == 0) {
-		t = DAY_LENGTH_TICKS / 2;
+		t = 3 * DAY_LENGTH_TICKS / 4;    // 18000: midnight, darkest
 	} else {
 		char* end;
 		t = strtol(argv[1], &end, 10);
