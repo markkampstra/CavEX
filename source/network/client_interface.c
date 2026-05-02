@@ -284,12 +284,19 @@ void clin_update() {
 		tchannel_send(&clin_empty_msg, call, true);
 	}
 
-	if(gstate.world_loaded && time_diff_ms(last_pos_update, time_get()) >= 50) {
+	// Source position from local_player.pos rather than gstate.camera so
+	// the very first send right after CRPC_PLAYER_POS arrives carries the
+	// freshly-teleported player position. clin_update runs before
+	// camera_attach in the main loop, so gstate.camera is still (0,0,0)
+	// for one frame after world load -- and that one stale frame was
+	// stomping the server's known-good spawn coords.
+	if(gstate.world_loaded && gstate.local_player
+	   && time_diff_ms(last_pos_update, time_get()) >= 50) {
 		svin_rpc_send(&(struct server_rpc) {
 			.type = SRPC_PLAYER_POS,
-			.payload.player_pos.x = gstate.camera.x,
-			.payload.player_pos.y = gstate.camera.y,
-			.payload.player_pos.z = gstate.camera.z,
+			.payload.player_pos.x = gstate.local_player->pos[0],
+			.payload.player_pos.y = gstate.local_player->pos[1],
+			.payload.player_pos.z = gstate.local_player->pos[2],
 			.payload.player_pos.rx = -glm_deg(gstate.camera.rx),
 			.payload.player_pos.ry = glm_deg(gstate.camera.ry) - 90.0F,
 		});

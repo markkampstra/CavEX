@@ -274,14 +274,16 @@ static void server_local_process(struct server_rpc* call, void* user) {
 		case SRPC_DEBUG_SPAWN: {
 			// Dev console: spawn a single mob ~3 blocks in front of the
 			// player. Only ENTITY_PIG is wired today; other types are no-ops
-			// until their server-side create function exists.
+			// until their server-side create function exists. NB: yaw is
+			// stored in degrees (negated; see SRPC_PLAYER_POS sender), so
+			// convert before using sin/cos.
 			if(!s->player.has_pos)
 				break;
-			float yaw = s->player.rx;
+			float yaw_rad = -glm_rad(s->player.rx);
 			vec3 spawn_pos = {
-				s->player.x + sinf(yaw) * 3.0F,
+				s->player.x + sinf(yaw_rad) * 3.0F,
 				s->player.y,
-				s->player.z + cosf(yaw) * 3.0F,
+				s->player.z + cosf(yaw_rad) * 3.0F,
 			};
 			uint8_t mob_type = call->payload.debug_spawn.mob_type;
 			uint32_t eid = entity_gen_id(s->entities);
