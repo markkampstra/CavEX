@@ -76,12 +76,34 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 					 (ivec2) {28, 14}, (ivec3) {12, 10, 18}, 0.0F, false,
 					 brightness);
 
+	// Udder. ModelCow attaches a second box to the body at tx=52, ty=0
+	// (dz=1 -> origin (53, 1)): addBox(-2, 2, -8, 4, 6, 1) at body rotPoint
+	// (0, 5, 2) sharing the body's rotateAngleX = pi/2. Pre-rotation MC dims
+	// (4, 6, 1) -> CavEX (X width, Z depth, Y height) = (4, 1, 6) plus the
+	// 90-deg X rotation. World X -2..2, Y 11..12, Z 4..10 (hangs under the
+	// belly toward the back).
+	render_model_box(mv, (vec3) {-2.0F, 12.0F, 4.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+					 (ivec2) {53, 1}, (ivec3) {4, 1, 6}, 0.0F, false, brightness);
+
 	// Head. ModelCow.head addBox(-4,-4,-6, 8,8,6) at rotPoint (0, 4, -8).
 	// No body rotation. MC tx=0, ty=0, dz=6 -> CavEX origin (6, 6). CavEX:
 	// X -4..4, Y 16..24, Z -14..-8.
 	render_model_box(mv, (vec3) {-4.0F, 16.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {6, 6}, (ivec3) {8, 6, 8}, 0.0F, false, brightness);
+
+	// Horns. ModelCow adds two 1x3x1 boxes at tx=22,ty=0 (dz=1 -> origin
+	// (23, 1)) attached to the head's rotPoint (0, 4, -8):
+	//   left  addBox(-5,-5,-4, 1,3,1) -> world X -5..-4, Y 22..25, Z -12..-11.
+	//   right addBox( 4,-5,-4, 1,3,1) -> world X  4.. 5, Y 22..25, Z -12..-11.
+	// They protrude up and out from the upper edges of the head.
+	render_model_box(mv, (vec3) {-5.0F, 22.0F, -12.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {23, 1}, (ivec3) {1, 1, 3}, 0.0F, false, brightness);
+	render_model_box(mv, (vec3) {4.0F, 22.0F, -12.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {23, 1}, (ivec3) {1, 1, 3}, 0.0F, false, brightness);
 
 	// Four legs with the standard quadruped trot. box[] is (X, Z, Y) so
 	// a 4x4x12 vertical leg is (4, 4, 12).

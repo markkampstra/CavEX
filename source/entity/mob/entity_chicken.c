@@ -87,6 +87,21 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {3, 3}, (ivec3) {4, 3, 6}, 0.0F, false, brightness);
 
+	// Bill. ModelChicken.bill addBox(-2,-4,-4, 4,2,2) at rotPoint(0,15,-4).
+	// MC tx=14, ty=0, dz=2 -> CavEX origin (16, 2). Sticks forward of the
+	// head (MC -Z direction = world +Z after the entity's R_y(pi)). World
+	// X -2..2, Y 11..13, Z -8..-6.
+	render_model_box(mv, (vec3) {-2.0F, 11.0F, -8.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {16, 2}, (ivec3) {4, 2, 2}, 0.0F, false, brightness);
+
+	// Chin (wattle). ModelChicken.chin addBox(-1,-2,-3, 2,2,2) at the same
+	// rotPoint. MC tx=14, ty=4, dz=2 -> CavEX origin (16, 6). Smaller,
+	// hangs below the bill. World X -1..1, Y 9..11, Z -7..-5.
+	render_model_box(mv, (vec3) {-1.0F, 9.0F, -7.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {16, 6}, (ivec3) {2, 2, 2}, 0.0F, false, brightness);
+
 	// Two legs (3x3x5 vertical) alternating; matches ModelChicken.
 	// Pivot at top-front of each leg so swing axis is the hip joint.
 	// MC tx=26, ty=0, dz=3 -> CavEX origin (29, 3).

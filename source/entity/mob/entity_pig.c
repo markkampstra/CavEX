@@ -110,6 +110,13 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {8, 8}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 
+	// Snout. ModelPig adds a second box to the head at tx=16, ty=16:
+	// addBox(-2, 0, -9, 4, 3, 1) at the head's rotPoint (0, 12, -6).
+	// dz=1 -> CavEX origin (17, 17). World X -2..2, Y 9..12, Z -15..-14.
+	render_model_box(mv, (vec3) {-2.0F, 9.0F, -15.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (ivec2) {17, 17}, (ivec3) {4, 1, 3}, 0.0F, false, brightness);
+
 	// Four legs with walking animation. Standard quadruped trot from
 	// mcp940 ModelQuadruped: legs on the same diagonal share a phase,
 	// the other diagonal is offset by pi. Pivot at the top of each leg
