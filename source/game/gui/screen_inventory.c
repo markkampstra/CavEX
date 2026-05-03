@@ -245,6 +245,14 @@ static void screen_inventory_render2D(struct screen* s, int width, int height) {
 	glm_translate(view, (vec3) {0.0F, 10.0F, 0.0F});
 
 	gfx_write_buffers(true, true, true);
+	// render_model_box draws via gfx_draw_quads, which only binds
+	// a_pos/a_color/a_texcoord. With lighting enabled the vertex shader
+	// replaces a_color with a light-LUT lookup driven by a_light, and
+	// stale a_light values from the world render bleed in -- the player
+	// renders pitch black. Disable lighting around the call so a_color
+	// (set to brightness*0xFF in render_model_box) drives the fragment
+	// color directly. Same trick the entity render uses.
+	gfx_lighting(false);
 	struct item_data held_item, helmet, chestplate, leggings, boots;
 	render_model_player(
 		view, glm_deg(angle_y * 0.66F * 0.5F), glm_deg(angle_x * 0.5F), 0.0F,
@@ -259,6 +267,7 @@ static void screen_inventory_render2D(struct screen* s, int width, int height) {
 			NULL,
 		inventory_get_slot(inv, INVENTORY_SLOT_ARMOR + 3, &boots) ? &boots :
 																	NULL);
+	gfx_lighting(true);
 	gfx_write_buffers(true, false, false);
 	gfx_matrix_modelview(GLM_MAT4_IDENTITY);
 
