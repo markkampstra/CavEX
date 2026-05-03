@@ -31,13 +31,22 @@ void mob_passive_tick_client(struct entity* e, struct mob_wander* w) {
 	// rule. Without this the client renders walk_amount=0 forever.
 	float dx = e->network_pos[0] - e->pos[0];
 	float dz = e->network_pos[2] - e->pos[2];
-	float speed = sqrtf(dx * dx + dz * dz);
+	float speed_sq = dx * dx + dz * dz;
+	float speed = sqrtf(speed_sq);
 	float target = speed * 4.0F;
 	if(target > 1.0F)
 		target = 1.0F;
 	w->walk_amount += (target - w->walk_amount) * 0.4F;
 	w->walk_distance += w->walk_amount;
 	w->tick_count++;
+
+	// CRPC_ENTITY_MOVE only carries position, not orientation, so the
+	// server's wander-direction yaw never reaches the client. Derive yaw
+	// from the observed movement vector instead so the model rotates to
+	// face whichever direction the entity is actually walking. Threshold
+	// avoids snapping orientations when the entity is essentially still.
+	if(speed_sq > 0.0001F)
+		e->orient[0] = atan2f(dx, dz);
 
 	glm_vec3_copy(e->pos, e->pos_old);
 	glm_vec3_copy(e->network_pos, e->pos);
