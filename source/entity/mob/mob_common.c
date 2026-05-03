@@ -84,8 +84,13 @@ void mob_passive_tick(struct entity* e, struct mob_wander* w,
 	e->vel[2] = w->dz * walk_speed;
 	e->vel[1] -= 0.08F;
 
+	// MC convention: entity.pos.y is the bottom of the bbox (feet level).
+	// aabb_setsize_centered makes a bbox spanning [-size/2, +size/2] in Y;
+	// translating up by size/2 puts the bbox in [0, size]. entity_try_move
+	// then translates by pos, so the final bbox sits at [pos.y, pos.y+size].
 	struct AABB bbox;
 	aabb_setsize_centered(&bbox, bbox_size, bbox_size, bbox_size);
+	aabb_translate(&bbox, 0.0F, bbox_size / 2.0F, 0.0F);
 
 	bool collision_xz = false;
 	for(int k = 0; k < 3; k++)

@@ -371,9 +371,12 @@ static void server_local_process(struct server_rpc* call, void* user) {
 			if(!s->player.has_pos)
 				break;
 			float yaw_rad = -glm_rad(s->player.rx);
+			// player.y is at the local player's eye level (1.62 blocks above
+			// feet); mobs use MC convention (pos.y = feet level), so subtract
+			// the eye-height offset before placing the mob.
 			vec3 spawn_pos = {
 				s->player.x + sinf(yaw_rad) * 3.0F,
-				s->player.y,
+				s->player.y - 1.62F,
 				s->player.z + cosf(yaw_rad) * 3.0F,
 			};
 			uint8_t mob_type = call->payload.debug_spawn.mob_type;

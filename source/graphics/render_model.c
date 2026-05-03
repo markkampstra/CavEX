@@ -110,30 +110,43 @@ void render_model_box(mat4 view, vec3 position, vec3 pivot, vec3 rotation,
 			(mirror ? (origin[0] + box[0]) : (origin[0] + 2 * box[0])) * sw,
 			origin[1] * sh,
 
-			(mirror ? (origin[0] + box[0] + box[1]) :
-					  (origin[0] + 2 * box[0] + box[1]))
-				* sw,
+			// "back" quad = obj -Z face. The entity pipeline applies
+			// glm_rotate_y(orient + pi), so at yaw=0 the obj -Z face
+			// renders at world +Z = the entity's FRONT. That's where the
+			// face/eyes texture has to land. MC's UV layout puts the
+			// face/eyes at (texU+dz, texV+dz)-(texU+dz+dx, texV+dz+dy);
+			// in CavEX's origin = MC textureOffset + (dz, dz) convention
+			// that simplifies to (origin[0], origin[1])-(origin[0]+box[0],
+			// origin[1]+box[2]).
+			(mirror ? origin[0] : (origin[0] + box[0])) * sw,
 			origin[1] * sh,
-			(mirror ? (origin[0] + box[0] + box[1]) :
-					  (origin[0] + 2 * box[0] + box[1]))
-				* sw,
+			(mirror ? origin[0] : (origin[0] + box[0])) * sw,
 			(origin[1] + box[2]) * sh,
-			(mirror ? (origin[0] + 2 * box[0] + box[1]) :
-					  (origin[0] + box[0] + box[1]))
-				* sw,
+			(mirror ? (origin[0] + box[0]) : origin[0]) * sw,
 			(origin[1] + box[2]) * sh,
-			(mirror ? (origin[0] + 2 * box[0] + box[1]) :
-					  (origin[0] + box[0] + box[1]))
-				* sw,
+			(mirror ? (origin[0] + box[0]) : origin[0]) * sw,
 			origin[1] * sh,
 
-			(mirror ? (origin[0] + box[0]) : origin[0]) * sw,
+			// "front" quad = obj +Z face. After R_y(pi) this lands at
+			// world -Z = entity's BACK, which gets the back-of-head UV
+			// region. MC's +Z face is at (texU+2*dz+dx, texV+dz)-..., or
+			// (origin[0]+box[0]+box[1], origin[1])-(origin[0]+2*box[0]+
+			// box[1], origin[1]+box[2]) in CavEX coords.
+			(mirror ? (origin[0] + 2 * box[0] + box[1]) :
+					  (origin[0] + box[0] + box[1]))
+				* sw,
 			origin[1] * sh,
-			(mirror ? origin[0] : (origin[0] + box[0])) * sw,
+			(mirror ? (origin[0] + box[0] + box[1]) :
+					  (origin[0] + 2 * box[0] + box[1]))
+				* sw,
 			origin[1] * sh,
-			(mirror ? origin[0] : (origin[0] + box[0])) * sw,
+			(mirror ? (origin[0] + box[0] + box[1]) :
+					  (origin[0] + 2 * box[0] + box[1]))
+				* sw,
 			(origin[1] + box[2]) * sh,
-			(mirror ? (origin[0] + box[0]) : origin[0]) * sw,
+			(mirror ? (origin[0] + 2 * box[0] + box[1]) :
+					  (origin[0] + box[0] + box[1]))
+				* sw,
 			(origin[1] + box[2]) * sh,
 
 			(origin[0] + box[0] + box[1]) * sw,
