@@ -96,6 +96,29 @@ static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 						 (ivec3) {3, 3, 12}, 0.0F, false, brightness);
 	}
 
+	// Wool fur overlay: same body and legs with the fur texture and a
+	// padding (puffs the box outward by `padding` on each side per
+	// render_model_box). Matches ModelSheep1: body padding 1.75, legs 0.5.
+	// Skipped if the sheep has been sheared. Color tint is not applied
+	// yet -- needs a shader-level change to multiply v_color into the
+	// texture sample; for now wool is white regardless of the
+	// dye-color metadata.
+	if(!ENTITY_DATA(e, entity_sheep_data)->sheared) {
+		gfx_bind_texture(&texture_mob_sheep_fur);
+		render_model_box(mv, (vec3) {-4.0F, 8.0F, -8.0F},
+						 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+						 (ivec2) {28, 8}, (ivec3) {8, 16, 6}, 1.75F, false,
+						 brightness);
+		for(int k = 0; k < 4; k++) {
+			bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
+			float swing = pair_a ? swing_a : swing_b;
+			render_model_box(mv, (vec3) {legs[k].x, 12.0F, legs[k].z},
+							 (vec3) {1.5F, 12.0F, 1.5F},
+							 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
+							 (ivec3) {3, 3, 12}, 0.5F, false, brightness);
+		}
+	}
+
 	gfx_lighting(true);
 
 	struct AABB shadow_bbox;
@@ -145,6 +168,7 @@ void entity_sheep(uint32_t id, struct entity* e, bool server, void* world,
 	sd->wander.dz = 0.0F;
 	sd->wander.walk_distance = 0.0F;
 	sd->wander.walk_amount = 0.0F;
+	sd->wander.tick_count = 0;
 	sd->wool_color = wool_color & 0x0F;
 	sd->sheared = false;
 	e->max_health = SHEEP_HEALTH;

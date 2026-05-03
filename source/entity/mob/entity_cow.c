@@ -148,6 +148,7 @@ void entity_cow(uint32_t id, struct entity* e, bool server, void* world) {
 	cd->wander.dz = 0.0F;
 	cd->wander.walk_distance = 0.0F;
 	cd->wander.walk_amount = 0.0F;
+	cd->wander.tick_count = 0;
 
 	e->max_health = COW_HEALTH;
 	e->health = COW_HEALTH;

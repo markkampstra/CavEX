@@ -90,6 +90,22 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 0},
 					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
 
+	// Wings: continuous-rotation around Z (vertical-flap axis), driven by
+	// the free-running tick counter. ModelChicken.setRotationAngles uses
+	// tick_count in radians directly; render_model_box wants degrees.
+	float wing_deg = ENTITY_DATA(e, entity_chicken_data)->wander.tick_count
+		* (180.0F / GLM_PIf);
+	// Right wing (mob's right -> -X side). Pivot at body-attached top edge.
+	render_model_box(mv, (vec3) {-3.0F, 11.0F, 0.0F},
+					 (vec3) {0.0F, 4.0F, 3.0F},
+					 (vec3) {0.0F, 0.0F, wing_deg}, (ivec2) {24, 13},
+					 (ivec3) {1, 6, 4}, 0.0F, false, brightness);
+	// Left wing (+X side). Mirrored UV.
+	render_model_box(mv, (vec3) {3.0F, 11.0F, 0.0F},
+					 (vec3) {1.0F, 4.0F, 3.0F},
+					 (vec3) {0.0F, 0.0F, -wing_deg}, (ivec2) {24, 13},
+					 (ivec3) {1, 6, 4}, 0.0F, true, brightness);
+
 	gfx_lighting(true);
 
 	struct AABB shadow_bbox;
@@ -138,6 +154,7 @@ void entity_chicken(uint32_t id, struct entity* e, bool server, void* world) {
 	cd->wander.dz = 0.0F;
 	cd->wander.walk_distance = 0.0F;
 	cd->wander.walk_amount = 0.0F;
+	cd->wander.tick_count = 0;
 	e->max_health = CHICKEN_HEALTH;
 	e->health = CHICKEN_HEALTH;
 }

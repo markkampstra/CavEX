@@ -37,6 +37,7 @@ void mob_passive_tick_client(struct entity* e, struct mob_wander* w) {
 		target = 1.0F;
 	w->walk_amount += (target - w->walk_amount) * 0.4F;
 	w->walk_distance += w->walk_amount;
+	w->tick_count++;
 
 	glm_vec3_copy(e->pos, e->pos_old);
 	glm_vec3_copy(e->network_pos, e->pos);
@@ -99,6 +100,7 @@ void mob_passive_tick(struct entity* e, struct mob_wander* w,
 		target = 1.0F;
 	w->walk_amount += (target - w->walk_amount) * 0.4F;
 	w->walk_distance += w->walk_amount;
+	w->tick_count++;
 
 	entity_living_tick(e);
 }

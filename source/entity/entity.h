@@ -204,6 +204,11 @@ struct mob_wander {
 	float dz;
 	float walk_distance;
 	float walk_amount;
+	// Free-running tick counter, incremented every server + client tick
+	// (matches MC's EntityLivingBase.ticksExisted / ageInTicks). Used by
+	// chicken wing rotation and any other "always animating" features
+	// that shouldn't gate on actual movement.
+	int tick_count;
 };
 
 struct entity_pig_data {

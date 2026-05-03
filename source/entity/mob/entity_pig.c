@@ -174,6 +174,7 @@ void entity_pig(uint32_t id, struct entity* e, bool server, void* world) {
 	pd->wander.dz = 0.0F;
 	pd->wander.walk_distance = 0.0F;
 	pd->wander.walk_amount = 0.0F;
+	pd->wander.tick_count = 0;
 
 	e->max_health = PIG_HEALTH;
 	e->health = PIG_HEALTH;
