@@ -84,13 +84,21 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
-	// Body cube: 10 wide x 16 long x 8 tall (in 1/16 block units).
-	render_model_box(mv, (vec3) {-5.0F, 6.0F, -8.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {28, 8},
-					 (ivec3) {10, 16, 8}, 0.0F, false, brightness);
+	// Body. Per ModelQuadruped: addBox(-5,-10,-7, 10,16,8) at rotPoint
+	// (0, 11, 2) with rotateAngleX = pi/2. We render the box with its
+	// pre-rotation dimensions (10x16 in pre-rotation X*Y, depth 8) plus
+	// an explicit 90 deg X rotation -- this way the UV regions in
+	// render_model_box (computed from box[]) match Beta's pre-rotation
+	// face layout. CavEX box[] order is (X width, Z depth, Y height)
+	// so pre-rotation (10, 16, 8) -> CavEX (10, 8, 16).
+	render_model_box(mv, (vec3) {-5.0F, 14.0F, -8.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+					 (ivec2) {28, 8}, (ivec3) {10, 8, 16}, 0.0F, false,
+					 brightness);
 
-	// Head cube
-	render_model_box(mv, (vec3) {-4.0F, 8.0F, -16.0F},
+	// Head: addBox(-4,-4,-8, 8,8,8) at rotPoint (0, 12, -6). No body
+	// rotation. CavEX coords: X -4..4, Y 8..16, Z -14..-6.
+	render_model_box(mv, (vec3) {-4.0F, 8.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 

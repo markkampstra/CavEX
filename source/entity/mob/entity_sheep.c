@@ -68,15 +68,19 @@ static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 	float swing_a = mob_leg_swing_deg(w, 0.0F);
 	float swing_b = mob_leg_swing_deg(w, GLM_PIf);
 
-	// Body cube (8 wide x 16 long x 6 tall)
-	render_model_box(mv, (vec3) {-4.0F, 8.0F, -8.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {28, 8},
-					 (ivec3) {8, 16, 6}, 0.0F, false, brightness);
+	// Body. ModelSheep2.body addBox(-4,-10,-7, 8,16,6) at rotPoint(0,5,2)
+	// with rotateAngleX = pi/2. Pre-rotation CavEX dims (8, 6, 16).
+	// World X -4..4, Y 12..18, Z -8..8 after rotation+translate.
+	render_model_box(mv, (vec3) {-4.0F, 18.0F, -8.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+					 (ivec2) {28, 8}, (ivec3) {8, 6, 16}, 0.0F, false,
+					 brightness);
 
-	// Head
-	render_model_box(mv, (vec3) {-3.0F, 6.0F, -14.0F},
+	// Head. ModelSheep2.head addBox(-3,-4,-6, 6,6,8) at rotPoint(0, 6, -8).
+	// World X -3..3, Y 14..20, Z -14..-6.
+	render_model_box(mv, (vec3) {-3.0F, 14.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {6, 6, 8}, 0.0F, false, brightness);
+					 (ivec2) {0, 0}, (ivec3) {6, 8, 6}, 0.0F, false, brightness);
 
 	// Four legs (3x3x12 vertical) with the standard quadruped trot.
 	struct leg {
@@ -105,9 +109,11 @@ static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 	// dye-color metadata.
 	if(!ENTITY_DATA(e, entity_sheep_data)->sheared) {
 		gfx_bind_texture(&texture_mob_sheep_fur);
-		render_model_box(mv, (vec3) {-4.0F, 8.0F, -8.0F},
-						 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-						 (ivec2) {28, 8}, (ivec3) {8, 16, 6}, 1.75F, false,
+		// Wool body: same dims/rotation as base body, with padding 1.75
+		// to puff outward (ModelSheep1.body padding).
+		render_model_box(mv, (vec3) {-4.0F, 18.0F, -8.0F},
+						 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+						 (ivec2) {28, 8}, (ivec3) {8, 6, 16}, 1.75F, false,
 						 brightness);
 		for(int k = 0; k < 4; k++) {
 			bool pair_a = (legs[k].x * legs[k].z) < 0.0F;

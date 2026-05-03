@@ -68,14 +68,17 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 	float leg_a = mob_leg_swing_deg(w, 0.0F);
 	float leg_b = mob_leg_swing_deg(w, GLM_PIf);
 
-	// Body cube: 6 wide x 8 deep x 6 tall after the chicken's pi/2 X
-	// rotation in the reference model. box[] is (X, Z, Y).
-	render_model_box(mv, (vec3) {-3.0F, 5.0F, -4.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {0, 9},
-					 (ivec3) {6, 8, 6}, 0.0F, false, brightness);
+	// Body. ModelChicken.body addBox(-3,-4,-3, 6,8,6) at rotPoint(0,16,0)
+	// with rotateAngleX = pi/2. Pre-rotation CavEX dims (6, 6, 8).
+	// World X -3..3, Y 5..11, Z -4..4 after rotation+translate.
+	render_model_box(mv, (vec3) {-3.0F, 11.0F, -4.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+					 (ivec2) {0, 9}, (ivec3) {6, 6, 8}, 0.0F, false,
+					 brightness);
 
-	// Head cube: 4 wide x 3 deep x 6 tall, just in front of the body.
-	render_model_box(mv, (vec3) {-2.0F, 11.0F, -6.0F},
+	// Head. ModelChicken.head addBox(-2,-6,-2, 4,6,3) at rotPoint(0, 15, -4).
+	// No rotation. World X -2..2, Y 9..15, Z -6..-3.
+	render_model_box(mv, (vec3) {-2.0F, 9.0F, -6.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {4, 3, 6}, 0.0F, false, brightness);
 
@@ -90,18 +93,17 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 0},
 					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
 
-	// Wings: oscillating flap around Z (vertical-flap axis). The reference
-	// uses an unbounded rotateAngleZ = ageInTicks (radians) which renders
-	// as a continuous blur; an oscillation looks closer to a real chicken.
+	// Wings. ModelChicken: rightWing rotPoint(-4,13,0), addBox(0,0,-3,1,4,6).
+	// leftWing rotPoint(4,13,0), addBox(-1,0,-3,1,4,6). Beta uses
+	// rotateAngleZ = ageInTicks (continuous spin); we oscillate +/-25 deg
+	// for a nicer look.
 	int t = ENTITY_DATA(e, entity_chicken_data)->wander.tick_count;
 	float wing_deg = sinf((float)t * 0.3F) * 25.0F;
-	// Right wing (mob's right -> -X side). Pivot at body-attached top edge.
-	render_model_box(mv, (vec3) {-3.0F, 11.0F, 0.0F},
+	render_model_box(mv, (vec3) {-4.0F, 11.0F, 0.0F},
 					 (vec3) {0.0F, 4.0F, 3.0F},
 					 (vec3) {0.0F, 0.0F, wing_deg}, (ivec2) {24, 13},
 					 (ivec3) {1, 6, 4}, 0.0F, false, brightness);
-	// Left wing (+X side). Mirrored UV.
-	render_model_box(mv, (vec3) {3.0F, 11.0F, 0.0F},
+	render_model_box(mv, (vec3) {4.0F, 11.0F, 0.0F},
 					 (vec3) {1.0F, 4.0F, 3.0F},
 					 (vec3) {0.0F, 0.0F, -wing_deg}, (ivec2) {24, 13},
 					 (ivec3) {1, 6, 4}, 0.0F, true, brightness);

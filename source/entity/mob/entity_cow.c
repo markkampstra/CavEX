@@ -64,15 +64,20 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
-	// Cow body: slightly larger than pig (12x18x10 in 1/16 units)
-	render_model_box(mv, (vec3) {-6.0F, 5.0F, -9.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {18, 4},
-					 (ivec3) {12, 18, 10}, 0.0F, false, brightness);
+	// Body. ModelCow.body addBox(-6,-10,-7, 12,18,10) at rotPoint(0, 5, 2)
+	// with rotateAngleX = pi/2. Pre-rotation CavEX dims (12, 10, 18).
+	// After rotation+pos lands the body at world X -6..6, Y 12..22, Z
+	// -8..10 (cow body offset slightly toward +Z in Beta).
+	render_model_box(mv, (vec3) {-6.0F, 22.0F, -8.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
+					 (ivec2) {18, 4}, (ivec3) {12, 10, 18}, 0.0F, false,
+					 brightness);
 
-	// Head cube — taller and slightly bigger than pig's
-	render_model_box(mv, (vec3) {-4.0F, 9.0F, -17.0F},
+	// Head. ModelCow.head addBox(-4,-4,-6, 8,8,6) at rotPoint (0, 4, -8).
+	// No body rotation. CavEX: X -4..4, Y 16..24, Z -14..-8.
+	render_model_box(mv, (vec3) {-4.0F, 16.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {8, 8, 6}, 0.0F, false, brightness);
+					 (ivec2) {0, 0}, (ivec3) {8, 6, 8}, 0.0F, false, brightness);
 
 	// Four legs with the standard quadruped trot. box[] is (X, Z, Y) so
 	// a 4x4x12 vertical leg is (4, 4, 12).
