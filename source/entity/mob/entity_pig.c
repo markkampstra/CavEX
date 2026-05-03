@@ -94,28 +94,32 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 
-	// Four legs with walking animation. Standard quadruped trot
-	// (mcp940 ModelQuadruped.setRotationAngles): legs at the same diagonal
-	// share a phase, the other diagonal is offset by pi. Pivot at the top
-	// of each leg so the box swings from the hip.
+	// Four legs with walking animation. Standard quadruped trot from
+	// mcp940 ModelQuadruped: legs on the same diagonal share a phase,
+	// the other diagonal is offset by pi. Pivot at the top of each leg
+	// so the box swings from the hip.
+	//
+	// box[] arg is (X width, Z depth, Y height) -- so a vertical 4x4x6
+	// leg is (4, 4, 6), NOT (4, 6, 4). Beta rotation points: legs at
+	// X = +/- 3, Z = +7 (back) / -5 (front).
 	const struct mob_wander* w = &ENTITY_DATA(e, entity_pig_data)->wander;
 	float swing_a = mob_leg_swing_deg(w, 0.0F);
 	float swing_b = mob_leg_swing_deg(w, GLM_PIf);
 	struct leg {
 		float x, z;
-		float phase; // a == diagonal pair 1, b == pair 2
 	} legs[4] = {
-		{-3.0F, -7.0F, 0.0F},  // front-left
-		{1.0F, -7.0F, 1.0F},   // front-right
-		{-3.0F, 4.0F, 1.0F},   // back-left
-		{1.0F, 4.0F, 0.0F},    // back-right
+		{-3.0F, 7.0F},    // back-left   (pair_a:  x*z < 0)
+		{3.0F, 7.0F},     // back-right  (pair_b)
+		{-3.0F, -5.0F},   // front-left  (pair_b)
+		{3.0F, -5.0F},    // front-right (pair_a)
 	};
 	for(int k = 0; k < 4; k++) {
-		float swing = (legs[k].phase == 0.0F) ? swing_a : swing_b;
+		bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
+		float swing = pair_a ? swing_a : swing_b;
 		render_model_box(mv, (vec3) {legs[k].x, 6.0F, legs[k].z},
 						 (vec3) {2.0F, 6.0F, 2.0F},
 						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
-						 (ivec3) {4, 6, 4}, 0.0F, false, brightness);
+						 (ivec3) {4, 4, 6}, 0.0F, false, brightness);
 	}
 
 	gfx_lighting(true);

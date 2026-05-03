@@ -68,23 +68,27 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 	float leg_a = mob_leg_swing_deg(w, 0.0F);
 	float leg_b = mob_leg_swing_deg(w, GLM_PIf);
 
-	// Body cube: small (6 wide x 8 long x 6 tall)
-	render_model_box(mv, (vec3) {-3.0F, 4.0F, -4.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {0, 16},
+	// Body cube: 6 wide x 8 deep x 6 tall after the chicken's pi/2 X
+	// rotation in the reference model. box[] is (X, Z, Y).
+	render_model_box(mv, (vec3) {-3.0F, 5.0F, -4.0F}, (vec3) {0.0F, 0.0F, 0.0F},
+					 (vec3) {0.0F, 0.0F, 0.0F}, (ivec2) {0, 9},
 					 (ivec3) {6, 8, 6}, 0.0F, false, brightness);
 
-	// Head cube
-	render_model_box(mv, (vec3) {-2.0F, 8.0F, -8.0F},
+	// Head cube: 4 wide x 3 deep x 6 tall, just in front of the body.
+	render_model_box(mv, (vec3) {-2.0F, 11.0F, -6.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {4, 6, 3}, 0.0F, false, brightness);
+					 (ivec2) {0, 0}, (ivec3) {4, 3, 6}, 0.0F, false, brightness);
 
-	// Two legs alternating; matches ModelChicken.setRotationAngles.
-	render_model_box(mv, (vec3) {-2.0F, 4.0F, 0.0F}, (vec3) {1.0F, 4.0F, 1.0F},
-					 (vec3) {leg_a, 0.0F, 0.0F}, (ivec2) {26, 13},
-					 (ivec3) {3, 4, 3}, 0.0F, false, brightness);
-	render_model_box(mv, (vec3) {1.0F, 4.0F, 0.0F}, (vec3) {1.0F, 4.0F, 1.0F},
-					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 13},
-					 (ivec3) {3, 4, 3}, 0.0F, false, brightness);
+	// Two legs (3x3x5 vertical) alternating; matches ModelChicken.
+	// Pivot at top-front of each leg so swing axis is the hip joint.
+	render_model_box(mv, (vec3) {1.0F, 5.0F, 1.0F},
+					 (vec3) {1.0F, 5.0F, 3.0F},
+					 (vec3) {leg_a, 0.0F, 0.0F}, (ivec2) {26, 0},
+					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
+	render_model_box(mv, (vec3) {-2.0F, 5.0F, 1.0F},
+					 (vec3) {1.0F, 5.0F, 3.0F},
+					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 0},
+					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
 
 	gfx_lighting(true);
 

@@ -74,25 +74,26 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {8, 8, 6}, 0.0F, false, brightness);
 
-	// Four legs with walking animation (same trot pattern as pig).
+	// Four legs with the standard quadruped trot. box[] is (X, Z, Y) so
+	// a 4x4x12 vertical leg is (4, 4, 12).
 	const struct mob_wander* w = &ENTITY_DATA(e, entity_cow_data)->wander;
 	float swing_a = mob_leg_swing_deg(w, 0.0F);
 	float swing_b = mob_leg_swing_deg(w, GLM_PIf);
 	struct leg {
 		float x, z;
-		bool pair_a;
 	} legs[4] = {
-		{-4.0F, -7.0F, true},  // front-left
-		{0.0F, -7.0F, false},  // front-right
-		{-4.0F, 5.0F, false},  // back-left
-		{0.0F, 5.0F, true},    // back-right
+		{-3.0F, 7.0F},    // back-left
+		{3.0F, 7.0F},     // back-right
+		{-3.0F, -5.0F},   // front-left
+		{3.0F, -5.0F},    // front-right
 	};
 	for(int k = 0; k < 4; k++) {
-		float swing = legs[k].pair_a ? swing_a : swing_b;
+		bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
+		float swing = pair_a ? swing_a : swing_b;
 		render_model_box(mv, (vec3) {legs[k].x, 12.0F, legs[k].z},
 						 (vec3) {2.0F, 12.0F, 2.0F},
 						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
-						 (ivec3) {4, 12, 4}, 0.0F, false, brightness);
+						 (ivec3) {4, 4, 12}, 0.0F, false, brightness);
 	}
 
 	gfx_lighting(true);

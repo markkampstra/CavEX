@@ -78,22 +78,22 @@ static void entity_sheep_render(struct entity* e, mat4 view, float tick_delta) {
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
 					 (ivec2) {0, 0}, (ivec3) {6, 6, 8}, 0.0F, false, brightness);
 
-	// Four legs
+	// Four legs (3x3x12 vertical) with the standard quadruped trot.
 	struct leg {
 		float x, z;
-		bool pair_a;
 	} legs[4] = {
-		{-3.0F, -7.0F, true},
-		{1.0F, -7.0F, false},
-		{-3.0F, 5.0F, false},
-		{1.0F, 5.0F, true},
+		{-3.0F, 7.0F},
+		{3.0F, 7.0F},
+		{-3.0F, -5.0F},
+		{3.0F, -5.0F},
 	};
 	for(int k = 0; k < 4; k++) {
-		float swing = legs[k].pair_a ? swing_a : swing_b;
+		bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
+		float swing = pair_a ? swing_a : swing_b;
 		render_model_box(mv, (vec3) {legs[k].x, 12.0F, legs[k].z},
-						 (vec3) {1.0F, 12.0F, 1.0F},
+						 (vec3) {1.5F, 12.0F, 1.5F},
 						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
-						 (ivec3) {3, 12, 3}, 0.0F, false, brightness);
+						 (ivec3) {3, 3, 12}, 0.0F, false, brightness);
 	}
 
 	gfx_lighting(true);
