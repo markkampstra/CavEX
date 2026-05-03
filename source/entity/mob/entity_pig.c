@@ -84,23 +84,31 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
+	// CavEX render_model_box origin convention (verified against
+	// render_model_player): origin = MC_textureOffset + (dz, dz). The
+	// origin point is the top-left of the FRONT face, not MC's
+	// textureOffset corner. Player body: MC offset (16,16), dz=4 -> origin
+	// (20, 20). Same rule applies to all box parts here.
+	//
 	// Body. Per ModelQuadruped: addBox(-5,-10,-7, 10,16,8) at rotPoint
 	// (0, 11, 2) with rotateAngleX = pi/2. We render the box with its
 	// pre-rotation dimensions (10x16 in pre-rotation X*Y, depth 8) plus
 	// an explicit 90 deg X rotation -- this way the UV regions in
 	// render_model_box (computed from box[]) match Beta's pre-rotation
 	// face layout. CavEX box[] order is (X width, Z depth, Y height)
-	// so pre-rotation (10, 16, 8) -> CavEX (10, 8, 16).
+	// so pre-rotation (10, 16, 8) -> CavEX (10, 8, 16). MC tx=28, ty=8,
+	// dz=8 -> CavEX origin (36, 16).
 	render_model_box(mv, (vec3) {-5.0F, 14.0F, -8.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
-					 (ivec2) {28, 8}, (ivec3) {10, 8, 16}, 0.0F, false,
+					 (ivec2) {36, 16}, (ivec3) {10, 8, 16}, 0.0F, false,
 					 brightness);
 
 	// Head: addBox(-4,-4,-8, 8,8,8) at rotPoint (0, 12, -6). No body
-	// rotation. CavEX coords: X -4..4, Y 8..16, Z -14..-6.
+	// rotation. MC tx=0, ty=0, dz=8 -> CavEX origin (8, 8). CavEX
+	// coords: X -4..4, Y 8..16, Z -14..-6.
 	render_model_box(mv, (vec3) {-4.0F, 8.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
+					 (ivec2) {8, 8}, (ivec3) {8, 8, 8}, 0.0F, false, brightness);
 
 	// Four legs with walking animation. Standard quadruped trot from
 	// mcp940 ModelQuadruped: legs on the same diagonal share a phase,
@@ -124,9 +132,10 @@ static void entity_pig_render(struct entity* e, mat4 view, float tick_delta) {
 	for(int k = 0; k < 4; k++) {
 		bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
 		float swing = pair_a ? swing_a : swing_b;
+		// MC ModelQuadruped legs at tx=0, ty=16, dz=4 -> CavEX origin (4, 20).
 		render_model_box(mv, (vec3) {legs[k].x, 6.0F, legs[k].z},
 						 (vec3) {2.0F, 6.0F, 2.0F},
-						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
+						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {4, 20},
 						 (ivec3) {4, 4, 6}, 0.0F, false, brightness);
 	}
 

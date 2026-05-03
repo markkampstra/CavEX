@@ -64,20 +64,24 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	mat4 mv;
 	glm_mat4_mul(view, model, mv);
 
+	// CavEX render_model_box origin = MC_textureOffset + (dz, dz). See
+	// note in entity_pig.c for derivation against render_model_player.
+	//
 	// Body. ModelCow.body addBox(-6,-10,-7, 12,18,10) at rotPoint(0, 5, 2)
 	// with rotateAngleX = pi/2. Pre-rotation CavEX dims (12, 10, 18).
-	// After rotation+pos lands the body at world X -6..6, Y 12..22, Z
-	// -8..10 (cow body offset slightly toward +Z in Beta).
+	// MC tx=18, ty=4, dz=10 -> CavEX origin (28, 14). After rotation+pos
+	// lands the body at world X -6..6, Y 12..22, Z -8..10.
 	render_model_box(mv, (vec3) {-6.0F, 22.0F, -8.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
-					 (ivec2) {18, 4}, (ivec3) {12, 10, 18}, 0.0F, false,
+					 (ivec2) {28, 14}, (ivec3) {12, 10, 18}, 0.0F, false,
 					 brightness);
 
 	// Head. ModelCow.head addBox(-4,-4,-6, 8,8,6) at rotPoint (0, 4, -8).
-	// No body rotation. CavEX: X -4..4, Y 16..24, Z -14..-8.
+	// No body rotation. MC tx=0, ty=0, dz=6 -> CavEX origin (6, 6). CavEX:
+	// X -4..4, Y 16..24, Z -14..-8.
 	render_model_box(mv, (vec3) {-4.0F, 16.0F, -14.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {8, 6, 8}, 0.0F, false, brightness);
+					 (ivec2) {6, 6}, (ivec3) {8, 6, 8}, 0.0F, false, brightness);
 
 	// Four legs with the standard quadruped trot. box[] is (X, Z, Y) so
 	// a 4x4x12 vertical leg is (4, 4, 12).
@@ -95,9 +99,10 @@ static void entity_cow_render(struct entity* e, mat4 view, float tick_delta) {
 	for(int k = 0; k < 4; k++) {
 		bool pair_a = (legs[k].x * legs[k].z) < 0.0F;
 		float swing = pair_a ? swing_a : swing_b;
+		// MC ModelQuadruped legs at tx=0, ty=16, dz=4 -> CavEX origin (4, 20).
 		render_model_box(mv, (vec3) {legs[k].x, 12.0F, legs[k].z},
 						 (vec3) {2.0F, 12.0F, 2.0F},
-						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {0, 16},
+						 (vec3) {swing, 0.0F, 0.0F}, (ivec2) {4, 20},
 						 (ivec3) {4, 4, 12}, 0.0F, false, brightness);
 	}
 

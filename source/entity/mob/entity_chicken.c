@@ -68,44 +68,50 @@ static void entity_chicken_render(struct entity* e, mat4 view, float tick_delta)
 	float leg_a = mob_leg_swing_deg(w, 0.0F);
 	float leg_b = mob_leg_swing_deg(w, GLM_PIf);
 
+	// CavEX render_model_box origin = MC_textureOffset + (dz, dz). See
+	// note in entity_pig.c.
+	//
 	// Body. ModelChicken.body addBox(-3,-4,-3, 6,8,6) at rotPoint(0,16,0)
 	// with rotateAngleX = pi/2. Pre-rotation CavEX dims (6, 6, 8).
-	// World X -3..3, Y 5..11, Z -4..4 after rotation+translate.
+	// MC tx=0, ty=9, dz=6 -> CavEX origin (6, 15). World X -3..3, Y 5..11,
+	// Z -4..4 after rotation+translate.
 	render_model_box(mv, (vec3) {-3.0F, 11.0F, -4.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {90.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 9}, (ivec3) {6, 6, 8}, 0.0F, false,
+					 (ivec2) {6, 15}, (ivec3) {6, 6, 8}, 0.0F, false,
 					 brightness);
 
 	// Head. ModelChicken.head addBox(-2,-6,-2, 4,6,3) at rotPoint(0, 15, -4).
-	// No rotation. World X -2..2, Y 9..15, Z -6..-3.
+	// MC tx=0, ty=0, dz=3 -> CavEX origin (3, 3). No rotation. World
+	// X -2..2, Y 9..15, Z -6..-3.
 	render_model_box(mv, (vec3) {-2.0F, 9.0F, -6.0F},
 					 (vec3) {0.0F, 0.0F, 0.0F}, (vec3) {0.0F, 0.0F, 0.0F},
-					 (ivec2) {0, 0}, (ivec3) {4, 3, 6}, 0.0F, false, brightness);
+					 (ivec2) {3, 3}, (ivec3) {4, 3, 6}, 0.0F, false, brightness);
 
 	// Two legs (3x3x5 vertical) alternating; matches ModelChicken.
 	// Pivot at top-front of each leg so swing axis is the hip joint.
+	// MC tx=26, ty=0, dz=3 -> CavEX origin (29, 3).
 	render_model_box(mv, (vec3) {1.0F, 5.0F, 1.0F},
 					 (vec3) {1.0F, 5.0F, 3.0F},
-					 (vec3) {leg_a, 0.0F, 0.0F}, (ivec2) {26, 0},
+					 (vec3) {leg_a, 0.0F, 0.0F}, (ivec2) {29, 3},
 					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
 	render_model_box(mv, (vec3) {-2.0F, 5.0F, 1.0F},
 					 (vec3) {1.0F, 5.0F, 3.0F},
-					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {26, 0},
+					 (vec3) {leg_b, 0.0F, 0.0F}, (ivec2) {29, 3},
 					 (ivec3) {3, 3, 5}, 0.0F, false, brightness);
 
 	// Wings. ModelChicken: rightWing rotPoint(-4,13,0), addBox(0,0,-3,1,4,6).
-	// leftWing rotPoint(4,13,0), addBox(-1,0,-3,1,4,6). Beta uses
-	// rotateAngleZ = ageInTicks (continuous spin); we oscillate +/-25 deg
-	// for a nicer look.
+	// leftWing rotPoint(4,13,0), addBox(-1,0,-3,1,4,6). MC tx=24, ty=13,
+	// dz=6 -> CavEX origin (30, 19). Beta uses rotateAngleZ = ageInTicks
+	// (continuous spin); we oscillate +/-25 deg for a nicer look.
 	int t = ENTITY_DATA(e, entity_chicken_data)->wander.tick_count;
 	float wing_deg = sinf((float)t * 0.3F) * 25.0F;
 	render_model_box(mv, (vec3) {-4.0F, 11.0F, 0.0F},
 					 (vec3) {0.0F, 4.0F, 3.0F},
-					 (vec3) {0.0F, 0.0F, wing_deg}, (ivec2) {24, 13},
+					 (vec3) {0.0F, 0.0F, wing_deg}, (ivec2) {30, 19},
 					 (ivec3) {1, 6, 4}, 0.0F, false, brightness);
 	render_model_box(mv, (vec3) {4.0F, 11.0F, 0.0F},
 					 (vec3) {1.0F, 4.0F, 3.0F},
-					 (vec3) {0.0F, 0.0F, -wing_deg}, (ivec2) {24, 13},
+					 (vec3) {0.0F, 0.0F, -wing_deg}, (ivec2) {30, 19},
 					 (ivec3) {1, 6, 4}, 0.0F, true, brightness);
 
 	gfx_lighting(true);
